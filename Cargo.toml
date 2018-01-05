@@ -1,0 +1,7 @@
+[package]
+name = "iso9660"
+version = "0.1.0"
+authors = ["Ian Douglas Scott <ian@iandouglasscott.com>"]
+
+[dependencies]
+static_assertions = "0.2"
