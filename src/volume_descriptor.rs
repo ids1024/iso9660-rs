@@ -14,7 +14,7 @@ pub union VolumeDescriptorData {
     primary: PrimaryVolumeDescriptor
 }
 
-#[repr(packed)]
+#[repr(C, packed)]
 pub struct PrimaryVolumeDescriptor {
     _pad1: u8,
     pub system_identifier: [u8; 32],
@@ -43,13 +43,26 @@ pub struct PrimaryVolumeDescriptor {
     pub bibliographic_file_identifier: [u8; 37],
 
     // XXX create a struct for times
-    pub creation_time: [u8; 17],
-    pub modification_time: [u8; 17],
-    pub expiration_time: [u8; 17],
-    pub effective_time: [u8; 17],
+    pub creation_time: DateTime,
+    pub modification_time: DateTime,
+    pub expiration_time: DateTime,
+    pub effective_time: DateTime,
 
     pub file_structure_version: u8,
     _pad4: [u8; 1166]
+}
+
+#[repr(C, packed)]
+pub struct DateTime {
+    // Other than gmt_offset, fields are ascii decimal
+    pub year: [u8; 4],
+    pub month: [u8; 2],
+    pub day: [u8; 2],
+    pub hour: [u8; 2],
+    pub minute: [u8; 2],
+    pub second: [u8; 2],
+    pub centisecond: [u8; 2],
+    pub gmt_offset: u8
 }
 
 assert_eq_size!(vol_desc_size_eq; VolumeDescriptor, [u8; 2048]);
