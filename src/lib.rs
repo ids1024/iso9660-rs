@@ -7,7 +7,7 @@ use std::io::{Result, SeekFrom, Read, Seek, Error, ErrorKind};
 use std::fs::File;
 use std::path::Path;
 
-use volume_descriptor::{VolumeDescriptor, PrimaryVolumeDescriptor};
+use volume_descriptor::{VolumeDescriptor, DirectoryEntryHeader};
 
 mod both_endian;
 mod volume_descriptor;
@@ -22,15 +22,15 @@ union Block {
 
 pub struct ISO9660 {
     file: File,
-    primary: PrimaryVolumeDescriptor,
-    block: Block
+    block: Block,
+    root: DirectoryEntryHeader
 }
 
 impl ISO9660 {
     pub fn new<P: AsRef<Path>>(path: P) -> Result<ISO9660> {
         let mut file = File::open(&path)?;
         let mut block = Block { bytes: [0; 2048] };
-        let mut primary = None;
+        let mut root = None;
 
         // Skip the "system area"
         file.seek(SeekFrom::Start(16 * 2048))?;
@@ -50,7 +50,10 @@ impl ISO9660 {
                 // Boot record
                 0 => {}
                 // Primary volume descriptor
-                1 => primary = Some(unsafe { desc.primary.clone() }),
+                1 => {
+                    let primary = unsafe { &desc.primary };
+                    root = Some(primary.root_directory_entry().clone());
+                },
                 // Supplementary volume descriptor
                 2 => {}
                 // Volume partition descriptor
@@ -63,8 +66,8 @@ impl ISO9660 {
 
         Ok(ISO9660 {
             file,
-            primary: primary.unwrap(),
-            block: Block { bytes: [0; 2048] }
+            block: Block { bytes: [0; 2048] },
+            root: root.unwrap()
         })
     }
 
