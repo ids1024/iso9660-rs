@@ -15,6 +15,7 @@ pub struct VolumeDescriptorHeader {
 }
 
 #[repr(C)]
+#[derive(Clone)]
 pub struct PrimaryVolumeDescriptor {
     _header: [u8; 7], // Access through VolumeDescriptor.header
     _pad1: u8,
@@ -54,6 +55,7 @@ pub struct PrimaryVolumeDescriptor {
 }
 
 #[repr(C)]
+#[derive(Clone)]
 pub struct DateTime {
     // Other than gmt_offset, fields are ascii decimal
     pub year: [u8; 4],

@@ -7,7 +7,7 @@ use std::io::{Result, SeekFrom, Read, Seek, Error, ErrorKind};
 use std::fs::File;
 use std::path::Path;
 
-use volume_descriptor::VolumeDescriptor;
+use volume_descriptor::{VolumeDescriptor, PrimaryVolumeDescriptor};
 
 mod both_endian;
 mod volume_descriptor;
@@ -22,23 +22,23 @@ union Block {
 
 pub struct ISO9660 {
     file: File,
+    primary: PrimaryVolumeDescriptor,
     block: Block
 }
 
 impl ISO9660 {
     pub fn new<P: AsRef<Path>>(path: P) -> Result<ISO9660> {
-        let mut fs = ISO9660 {
-            file: File::open(&path)?,
-            block: Block { bytes: [0; 2048] }
-        };
+        let mut file = File::open(&path)?;
+        let mut block = Block { bytes: [0; 2048] };
+        let mut primary = None;
 
         // Skip the "system area"
-        fs.file.seek(SeekFrom::Start(16 * 2048))?;
+        file.seek(SeekFrom::Start(16 * 2048))?;
 
         // Read volume descriptors
         loop {
-            fs.file.read(unsafe { &mut fs.block.bytes })?;
-            let desc = unsafe { &fs.block.volume_descriptor };
+            file.read(unsafe { &mut block.bytes })?;
+            let desc = unsafe { &block.volume_descriptor };
             let header = unsafe { &desc.header };
 
             if &header.identifier != b"CD001" || header.version != 1 {
@@ -50,7 +50,9 @@ impl ISO9660 {
                 // Boot record
                 0 => {}
                 // Primary volume descriptor
-                1 => {}
+                1 => {
+                    primary = Some(unsafe { desc.primary.clone() });
+                }
                 // Supplementary volume descriptor
                 2 => {}
                 // Volume partition descriptor
@@ -61,7 +63,11 @@ impl ISO9660 {
             }
         }
 
-        Ok(fs)
+        Ok(ISO9660 {
+            file,
+            primary: primary.unwrap(),
+            block: Block { bytes: [0; 2048] }
+        })
     }
 
     /// Read the block at a given LBA (logical block address)

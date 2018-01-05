@@ -4,6 +4,7 @@
 use std::ops::Deref;
 
 #[repr(C)]
+#[derive(Clone)]
 pub struct BothEndian16 {
     le: u16,
     be: u16
@@ -22,6 +23,7 @@ impl Deref for BothEndian16 {
 }
 
 #[repr(C)]
+#[derive(Clone)]
 pub struct BothEndian32 {
     le: u32,
     be: u32
