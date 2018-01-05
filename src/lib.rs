@@ -50,15 +50,13 @@ impl ISO9660 {
                 // Boot record
                 0 => {}
                 // Primary volume descriptor
-                1 => {
-                    primary = Some(unsafe { desc.primary.clone() });
-                }
+                1 => primary = Some(unsafe { desc.primary.clone() }),
                 // Supplementary volume descriptor
                 2 => {}
                 // Volume partition descriptor
                 3 => {}
                 // Volume descriptor set terminator
-                255 => { break; }
+                255 => break,
                 _ => {}
             }
         }
