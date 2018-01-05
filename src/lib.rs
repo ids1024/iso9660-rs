@@ -72,3 +72,5 @@ impl ISO9660 {
         Ok(&self.block)
     }
 }
+
+assert_eq_size!(block_size_eq; Block, [u8; 2048]);
