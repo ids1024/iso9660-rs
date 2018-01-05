@@ -64,4 +64,11 @@ impl ISO9660 {
 
         Ok(fs)
     }
+
+    /// Read the block at a given LBA (logical block address)
+    fn read_block(&mut self, lba: u64) -> Result<&Block> {
+        self.file.seek(SeekFrom::Start(lba * 2048))?;
+        self.file.read(unsafe { &mut self.block.bytes })?;
+        Ok(&self.block)
+    }
 }
