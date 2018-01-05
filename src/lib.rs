@@ -37,8 +37,8 @@ impl ISO9660 {
 
         // Read volume descriptors
         loop {
-            fs.file.read(unsafe { &mut fs.block.bytes });
-            let desc = unsafe { fs.block.volume_descriptor };
+            fs.file.read(unsafe { &mut fs.block.bytes })?;
+            let desc = unsafe { &fs.block.volume_descriptor };
 
             if &desc.identifier != b"CD001" || desc.version != 1 {
                 // XXX Change error type
