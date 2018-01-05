@@ -1,6 +1,4 @@
 #![feature(untagged_unions)]
-#![feature(repr_align)]
-#![feature(attr_literals)]
 
 #[macro_use]
 extern crate static_assertions;
@@ -41,13 +39,14 @@ impl ISO9660 {
         loop {
             fs.file.read(unsafe { &mut fs.block.bytes })?;
             let desc = unsafe { &fs.block.volume_descriptor };
+            let header = unsafe { &desc.header };
 
-            if &desc.identifier != b"CD001" || desc.version != 1 {
+            if &header.identifier != b"CD001" || header.version != 1 {
                 // XXX Change error type
                 return Err(Error::new(ErrorKind::Other, "Not ISO9660"))
             }
 
-            match desc.type_code {
+            match header.type_code {
                 // Boot record
                 0 => {}
                 // Primary volume descriptor
