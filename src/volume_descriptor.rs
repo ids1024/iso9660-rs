@@ -52,7 +52,7 @@ pub struct PrimaryVolumeDescriptor {
     _pad4: [u8; 1166]
 }
 
-#[repr(C, packed)]
+#[repr(C)]
 pub struct DateTime {
     // Other than gmt_offset, fields are ascii decimal
     pub year: [u8; 4],
@@ -67,3 +67,4 @@ pub struct DateTime {
 
 assert_eq_size!(vol_desc_size_eq; VolumeDescriptor, [u8; 2048]);
 assert_eq_size!(prim_vol_desc_size_eq; PrimaryVolumeDescriptor, [u8; 2041]);
+assert_eq_size!(datetime_size_eq; DateTime, [u8; 17]);
