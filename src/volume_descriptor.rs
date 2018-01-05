@@ -1,7 +1,7 @@
 use both_endian::{BothEndian16, BothEndian32};
 
 
-#[repr(C)]
+#[repr(C, align(32))]
 pub struct VolumeDescriptor {
     pub type_code: u8,
     pub identifier: [u8; 5],

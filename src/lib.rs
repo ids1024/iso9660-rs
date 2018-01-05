@@ -1,4 +1,6 @@
 #![feature(untagged_unions)]
+#![feature(repr_align)]
+#![feature(attr_literals)]
 
 #[macro_use]
 extern crate static_assertions;
