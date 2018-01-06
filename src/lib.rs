@@ -52,6 +52,14 @@ impl ISO9660 {
                 // Primary volume descriptor
                 1 => {
                     let primary = unsafe { &desc.primary };
+
+                    if *primary.logical_block_size != 2048 {
+                        // This is almost always the case, but technically
+                        // not guaranteed by the standard.
+                        // TODO: Implement this
+                        return Err(Error::new(ErrorKind::Other, "Block size not 2048"))
+                    }
+
                     root = Some(primary.root_directory_entry().clone());
                 },
                 // Supplementary volume descriptor
