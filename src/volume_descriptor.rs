@@ -1,5 +1,10 @@
 use both_endian::{BothEndian16, BothEndian32};
 
+// NOTE: If the compiler adds extra padding for some reason, this will
+// break (which will be caught by the static assertions. I doubt it would,
+// and it works on x86_64 Linux, but it is possible that it could fail with
+// certain architectures/ABIs.
+
 
 #[repr(C)]
 pub union VolumeDescriptor {
