@@ -73,7 +73,7 @@ impl PrimaryVolumeDescriptor {
 }
 
 #[repr(C)]
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct DateTimeAscii {
     // Other than gmt_offset, fields are ascii decimal
     pub year: [u8; 4],
@@ -87,7 +87,7 @@ pub struct DateTimeAscii {
 }
 
 #[repr(C)]
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct DateTime {
     pub year: u8, // years since 1900
     pub month: u8,
@@ -99,7 +99,7 @@ pub struct DateTime {
 }
 
 #[repr(C)]
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct DirectoryEntryHeader {
     _pad1: [u8; 2],
     pub length: u8,
