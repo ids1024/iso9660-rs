@@ -41,7 +41,7 @@ impl ISO9660 {
             let desc = unsafe { &block.volume_descriptor };
             let header = unsafe { &desc.header };
 
-            if &header.identifier != b"CD001" || header.version != 1 {
+            if (&header.identifier, header.version) != (b"CD001", 1) {
                 // XXX Change error type
                 return Err(Error::new(ErrorKind::Other, "Not ISO9660"))
             }
