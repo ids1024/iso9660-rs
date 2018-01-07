@@ -7,10 +7,12 @@ use std::io::{Result, SeekFrom, Read, Seek, Error, ErrorKind};
 use std::fs::File;
 use std::path::Path;
 
-use volume_descriptor::{VolumeDescriptor, DirectoryEntryHeader};
+use volume_descriptor::{VolumeDescriptor};
+pub use directory_entry::{DirectoryEntry, ISODirectory, ISOFile};
 
 mod both_endian;
 mod volume_descriptor;
+mod directory_entry;
 
 
 #[repr(C)]
@@ -23,7 +25,7 @@ union Block {
 pub struct ISO9660 {
     file: File,
     block: Block,
-    root: DirectoryEntryHeader
+    pub root: ISODirectory
 }
 
 impl ISO9660 {
@@ -75,7 +77,10 @@ impl ISO9660 {
         Ok(ISO9660 {
             file,
             block: Block { bytes: [0; 2048] },
-            root: root.unwrap()
+            root: ISODirectory {
+                header: root.unwrap(),
+                identifier: "\0".to_string() // XXX actually read from disk
+            }
         })
     }
 

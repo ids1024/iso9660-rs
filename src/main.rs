@@ -13,5 +13,8 @@ fn main() {
     }
 
     let path = env::args().nth(1).unwrap();
-    let _fs = ISO9660::new(path).unwrap();
+    let mut fs = ISO9660::new(path).unwrap();
+
+    let root = fs.root.clone();
+    println!("{:#?}", root.contents(&mut fs).unwrap());
 }

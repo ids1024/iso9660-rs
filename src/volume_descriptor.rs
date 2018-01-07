@@ -115,6 +115,12 @@ pub struct DirectoryEntryHeader {
     _pad2: u8,
 }
 
+impl DirectoryEntryHeader {
+    pub fn is_directory(&self) -> bool {
+        self.file_flags & (1 << 1) != 0
+    }
+}
+
 assert_eq_size!(vol_desc_size_eq; VolumeDescriptor, [u8; 2048]);
 assert_eq_size!(prim_vol_desc_size_eq; PrimaryVolumeDescriptor, [u8; 2048]);
 assert_eq_size!(datetime_ascii_size_eq; DateTimeAscii, [u8; 17]);
