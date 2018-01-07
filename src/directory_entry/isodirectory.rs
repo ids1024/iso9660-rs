@@ -2,7 +2,7 @@ use std::io::{Result, Error, ErrorKind};
 use std::{cmp, mem, ptr, str};
 
 use ::{ISO9660, DirectoryEntry, ISOFile};
-use ::volume_descriptor::DirectoryEntryHeader;
+use super::DirectoryEntryHeader;
 
 #[derive(Clone, Debug)]
 pub struct ISODirectory {
@@ -93,4 +93,3 @@ impl ISODirectory {
         Ok(entries)
     }
 }
-

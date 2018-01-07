@@ -1,4 +1,4 @@
-use ::volume_descriptor::DirectoryEntryHeader;
+use super::DirectoryEntryHeader;
 
 #[derive(Clone, Debug)]
 pub struct ISOFile {

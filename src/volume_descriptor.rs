@@ -1,4 +1,6 @@
 use both_endian::{BothEndian16, BothEndian32};
+use datetime::DateTimeAscii;
+use super::directory_entry::DirectoryEntryHeader;
 
 // NOTE: If the compiler adds extra padding for some reason, this will
 // break (which will be caught by the static assertions. I doubt it would,
@@ -72,57 +74,5 @@ impl PrimaryVolumeDescriptor {
     }
 }
 
-#[repr(C)]
-#[derive(Clone, Debug)]
-pub struct DateTimeAscii {
-    // Other than gmt_offset, fields are ascii decimal
-    pub year: [u8; 4],
-    pub month: [u8; 2],
-    pub day: [u8; 2],
-    pub hour: [u8; 2],
-    pub minute: [u8; 2],
-    pub second: [u8; 2],
-    pub centisecond: [u8; 2],
-    pub gmt_offset: u8
-}
-
-#[repr(C)]
-#[derive(Clone, Debug)]
-pub struct DateTime {
-    pub year: u8, // years since 1900
-    pub month: u8,
-    pub day: u8,
-    pub hour: u8,
-    pub minute: u8,
-    pub second: u8,
-    pub gmt_offset: u8
-}
-
-#[repr(C)]
-#[derive(Clone, Debug)]
-pub struct DirectoryEntryHeader {
-    _pad1: [u8; 2],
-    pub length: u8,
-    pub extended_attribute_record_length: u8,
-    pub extent_loc: BothEndian32,
-    pub extent_length: BothEndian32,
-    pub time: DateTime,
-    pub file_flags: u8,
-    pub file_unit_size: u8,
-    pub interleave_gap_size: u8,
-    pub volume_sequence_number: BothEndian16,
-    pub file_identifier_len: u8,
-    _pad2: u8,
-}
-
-impl DirectoryEntryHeader {
-    pub fn is_directory(&self) -> bool {
-        self.file_flags & (1 << 1) != 0
-    }
-}
-
 assert_eq_size!(vol_desc_size_eq; VolumeDescriptor, [u8; 2048]);
 assert_eq_size!(prim_vol_desc_size_eq; PrimaryVolumeDescriptor, [u8; 2048]);
-assert_eq_size!(datetime_ascii_size_eq; DateTimeAscii, [u8; 17]);
-assert_eq_size!(datetime_size_eq; DateTime, [u8; 7]);
-assert_eq_size!(directory_hdr_size_eq; DirectoryEntryHeader, [u8; 36]);
