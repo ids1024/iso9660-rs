@@ -1,18 +1,22 @@
 use std::io::{Result, Error, ErrorKind};
 use std::{cmp, mem, ptr, str};
+use std::fs::File;
+use std::cell::RefCell;
+use std::rc::Rc;
 
-use ::{ISO9660, DirectoryEntry, ISOFile};
+use ::{DirectoryEntry, ISOFile, Block};
 use super::DirectoryEntryHeader;
 
 #[derive(Clone, Debug)]
 pub struct ISODirectory {
     pub(crate) header: DirectoryEntryHeader,
-    pub(crate) identifier: String
+    pub(crate) identifier: String,
+    pub(crate) file: Rc<RefCell<File>>
 }
 
 impl ISODirectory {
     // TODO: Iterator? Perhaps using generator?
-    pub fn contents(&self, fs: &ISO9660) -> Result<Vec<DirectoryEntry>> {
+    pub fn contents(&self) -> Result<Vec<DirectoryEntry>> {
         let mut entries = Vec::new();
 
         let loc = *self.header.extent_loc;
@@ -22,7 +26,7 @@ impl ISODirectory {
         let mut block_num: u32 = 0;
         while block_num < blocks {
             let block_len = cmp::min(len - 2048 * block_num, 2048);
-            let block = fs.read_block(loc as u64 + block_num as u64)?;
+            let block = Block::read(&self.file, loc as u64 + block_num as u64)?;
 
             let mut block_pos: u32 = 0;
             while block_pos < block_len {
@@ -75,7 +79,8 @@ impl ISODirectory {
                 let entry = if header.is_directory() {
                     DirectoryEntry::Directory(ISODirectory {
                         header,
-                        identifier: file_identifier
+                        identifier: file_identifier,
+                        file: self.file.clone()
                     })
                 } else {
                     DirectoryEntry::File(ISOFile {

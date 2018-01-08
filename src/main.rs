@@ -15,5 +15,5 @@ fn main() {
     let path = env::args().nth(1).unwrap();
     let fs = ISO9660::new(path).unwrap();
 
-    println!("{:#?}", fs.root.contents(&fs).unwrap());
+    println!("{:#?}", fs.root.contents().unwrap());
 }
