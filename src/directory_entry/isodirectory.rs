@@ -3,6 +3,7 @@ use std::{cmp, mem, ptr, str};
 use std::fs::File;
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::str::FromStr;
 
 use ::{DirectoryEntry, ISOFile, Block};
 use super::DirectoryEntryHeader;
@@ -10,7 +11,7 @@ use super::DirectoryEntryHeader;
 #[derive(Clone, Debug)]
 pub struct ISODirectory {
     pub(crate) header: DirectoryEntryHeader,
-    pub(crate) identifier: String,
+    pub identifier: String,
     pub(crate) file: Rc<RefCell<File>>
 }
 
@@ -68,7 +69,7 @@ impl ISODirectory {
                 // 33 is the size of the header without padding
                 let end = header.file_identifier_len as usize + 33;
                 // XXX unwrap
-                let file_identifier = str::from_utf8(&entry[33..end]).unwrap().to_string();
+                let file_identifier = str::from_utf8(&entry[33..end]).unwrap();
 
 
                 // After the file identifier, ISO 9660 allows addition space for
@@ -79,13 +80,29 @@ impl ISODirectory {
                 let entry = if header.is_directory() {
                     DirectoryEntry::Directory(ISODirectory {
                         header,
-                        identifier: file_identifier,
+                        identifier: file_identifier.to_string(),
                         file: self.file.clone()
                     })
                 } else {
+                    let mut name = file_identifier;
+                    let mut version = None;
+                    if let Some(idx) = file_identifier.rfind(";") {
+                        // Files (not directories) in ISO 9660 can have a version
+                        // number, which is provided at the end of the
+                        // identifier, seperated by ;
+                        let ver_str = &name[idx+1..];
+                        name = &name[..idx];
+                        // XXX unwrap
+                        version = Some(u16::from_str(ver_str).unwrap())
+                    }
+
+                    // Files without an extension in ISO 9660 have a . at the end
+                    name = name.trim_right_matches('.');
+
                     DirectoryEntry::File(ISOFile {
                         header,
-                        identifier: file_identifier
+                        identifier: name.to_string(),
+                        version
                     })
                 };
 
