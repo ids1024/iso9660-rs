@@ -7,25 +7,22 @@ pub struct ISOFile {
     pub(crate) header: DirectoryEntryHeader,
     pub identifier: String,
     // File version; ranges from 1 to 32767
-    pub version: Option<u16>
+    pub version: u16
 }
 
 impl ISOFile {
     pub(crate) fn new(header: DirectoryEntryHeader, identifier: &str) -> ISOFile {
-        let mut name = identifier;
-        let mut version = None;
+        // Files (not directories) in ISO 9660 have a version number, which is
+        // provided at the end of the identifier, seperated by ';'
+        // XXX unwrap
+        let idx = identifier.rfind(";").unwrap();
 
-        if let Some(idx) = identifier.rfind(";") {
-            // Files (not directories) in ISO 9660 can have a version
-            // number, which is provided at the end of the
-            // identifier, seperated by ;
-            let ver_str = &name[idx+1..];
-            name = &name[..idx];
-            // XXX unwrap
-            version = Some(u16::from_str(ver_str).unwrap())
-        }
+        let ver_str = &identifier[idx+1..];
+        let mut name = &identifier[..idx];
+        // XXX unwrap
+        let version = u16::from_str(ver_str).unwrap();
 
-        // Files without an extension in ISO 9660 have a . at the end
+        // Files without an extension have a '.' at the end
         name = name.trim_right_matches('.');
 
         ISOFile {
