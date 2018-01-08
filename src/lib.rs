@@ -76,11 +76,11 @@ impl ISO9660 {
 
         Ok(ISO9660 {
             _file: file,
-            root: ISODirectory {
-                header: root.unwrap(),
-                identifier: "\0".to_string(), // XXX actually read from disk
-                file: file2
-            }
+            root: ISODirectory::new(
+                root.unwrap(),
+                "\0".to_string(), // XXX actually read from disk
+                file2
+                )
         })
     }
 

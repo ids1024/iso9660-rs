@@ -3,7 +3,6 @@ use std::{cmp, mem, ptr, str};
 use std::fs::File;
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::str::FromStr;
 
 use ::{DirectoryEntry, ISOFile, Block};
 use super::DirectoryEntryHeader;
@@ -12,10 +11,18 @@ use super::DirectoryEntryHeader;
 pub struct ISODirectory {
     pub(crate) header: DirectoryEntryHeader,
     pub identifier: String,
-    pub(crate) file: Rc<RefCell<File>>
+    file: Rc<RefCell<File>>
 }
 
 impl ISODirectory {
+    pub(crate) fn new(header: DirectoryEntryHeader, identifier: String, file: Rc<RefCell<File>>) -> ISODirectory {
+        ISODirectory {
+            header,
+            identifier,
+            file
+        }
+    }
+
     // TODO: Iterator? Perhaps using generator?
     pub fn contents(&self) -> Result<Vec<DirectoryEntry>> {
         let mut entries = Vec::new();
@@ -84,26 +91,7 @@ impl ISODirectory {
                         file: self.file.clone()
                     })
                 } else {
-                    let mut name = file_identifier;
-                    let mut version = None;
-                    if let Some(idx) = file_identifier.rfind(";") {
-                        // Files (not directories) in ISO 9660 can have a version
-                        // number, which is provided at the end of the
-                        // identifier, seperated by ;
-                        let ver_str = &name[idx+1..];
-                        name = &name[..idx];
-                        // XXX unwrap
-                        version = Some(u16::from_str(ver_str).unwrap())
-                    }
-
-                    // Files without an extension in ISO 9660 have a . at the end
-                    name = name.trim_right_matches('.');
-
-                    DirectoryEntry::File(ISOFile {
-                        header,
-                        identifier: name.to_string(),
-                        version
-                    })
+                    DirectoryEntry::File(ISOFile::new(header, file_identifier))
                 };
 
                 entries.push(entry);
