@@ -6,6 +6,8 @@ extern crate static_assertions;
 use std::io::{Result, SeekFrom, Read, Seek, Error, ErrorKind};
 use std::fs::File;
 use std::path::Path;
+use std::cell::RefCell;
+use std::mem;
 
 use volume_descriptor::{VolumeDescriptor};
 pub use directory_entry::{DirectoryEntry, ISODirectory, ISOFile};
@@ -23,8 +25,7 @@ union Block {
 }
 
 pub struct ISO9660 {
-    file: File,
-    block: Block,
+    file: RefCell<File>,
     pub root: ISODirectory
 }
 
@@ -75,8 +76,7 @@ impl ISO9660 {
         }
 
         Ok(ISO9660 {
-            file,
-            block: Block { bytes: [0; 2048] },
+            file: RefCell::new(file),
             root: ISODirectory {
                 header: root.unwrap(),
                 identifier: "\0".to_string() // XXX actually read from disk
@@ -85,18 +85,21 @@ impl ISO9660 {
     }
 
     /// Read the block at a given LBA (logical block address)
-    fn read_block(&mut self, lba: u64) -> Result<&Block> {
+    fn read_block(&self, lba: u64) -> Result<Block> {
+        let mut block: Block = unsafe { mem::uninitialized() };
+        let file = self.file.borrow_mut();
+
         #[cfg(unix)]
         {
             use std::os::unix::fs::FileExt;
-            self.file.read_at(unsafe { &mut self.block.bytes }, lba * 2048)?;
+            file.read_at(unsafe { &mut block.bytes }, lba * 2048)?;
         }
         #[cfg(not(unix))]
         {
-            self.file.seek(SeekFrom::Start(lba * 2048))?;
-            self.file.read(unsafe { &mut self.block.bytes })?;
+            file.seek(SeekFrom::Start(lba * 2048))?;
+            file.read(unsafe { &mut block.bytes })?;
         }
-        Ok(&self.block)
+        Ok(block)
     }
 }
 

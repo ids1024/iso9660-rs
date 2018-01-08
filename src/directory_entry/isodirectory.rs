@@ -12,7 +12,7 @@ pub struct ISODirectory {
 
 impl ISODirectory {
     // TODO: Iterator? Perhaps using generator?
-    pub fn contents(&self, fs: &mut ISO9660) -> Result<Vec<DirectoryEntry>> {
+    pub fn contents(&self, fs: &ISO9660) -> Result<Vec<DirectoryEntry>> {
         let mut entries = Vec::new();
 
         let loc = *self.header.extent_loc;
