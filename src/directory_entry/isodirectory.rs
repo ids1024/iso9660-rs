@@ -85,13 +85,17 @@ impl ISODirectory {
                 block_pos += header.length as u32;
 
                 let entry = if header.is_directory() {
-                    DirectoryEntry::Directory(ISODirectory {
+                    DirectoryEntry::Directory(ISODirectory::new(
                         header,
-                        identifier: file_identifier.to_string(),
-                        file: self.file.clone()
-                    })
+                        file_identifier.to_string(),
+                        self.file.clone()
+                    ))
                 } else {
-                    DirectoryEntry::File(ISOFile::new(header, file_identifier))
+                    DirectoryEntry::File(ISOFile::new(
+                        header,
+                        file_identifier,
+                        self.file.clone()
+                    ))
                 };
 
                 entries.push(entry);
