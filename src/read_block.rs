@@ -4,10 +4,6 @@ use std::rc::Rc;
 use std::mem;
 use ::{ISOError, Result};
 
-// NOTE: Technically the primary volume descriptor could specify a block size
-// ofther than 2048. That is not common in practice, but should probably be
-// supported.
-
 /// Read the block at a given LBA (logical block address)
 pub(crate) fn read_block(file: &Rc<RefCell<File>>, lba: u64) -> Result<[u8; 2048]> {
     // Using uninitialized is safe because the buffer is not read unless it is
