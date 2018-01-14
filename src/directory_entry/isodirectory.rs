@@ -89,7 +89,7 @@ impl ISODirectory {
                         header,
                         file_identifier,
                         self.file.clone()
-                    ))
+                    )?)
                 };
 
                 entries.push(entry);

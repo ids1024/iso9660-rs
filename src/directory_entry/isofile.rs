@@ -4,7 +4,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use super::DirectoryEntryHeader;
-use ::{read_block, Result};
+use ::{read_block, Result, ISOError};
 
 #[derive(Clone, Debug)]
 pub struct ISOFile {
@@ -16,26 +16,25 @@ pub struct ISOFile {
 }
 
 impl ISOFile {
-    pub(crate) fn new(header: DirectoryEntryHeader, identifier: &str, file: Rc<RefCell<File>>) -> ISOFile {
+    pub(crate) fn new(header: DirectoryEntryHeader, identifier: &str, file: Rc<RefCell<File>>) -> Result<ISOFile> {
         // Files (not directories) in ISO 9660 have a version number, which is
         // provided at the end of the identifier, seperated by ';'
-        // XXX unwrap
-        let idx = identifier.rfind(";").unwrap();
+        let error = ISOError::InvalidFs("File indentifier missing ';'");
+        let idx = identifier.rfind(";").ok_or(error)?;
 
         let ver_str = &identifier[idx+1..];
         let mut name = &identifier[..idx];
-        // XXX unwrap
-        let version = u16::from_str(ver_str).unwrap();
+        let version = u16::from_str(ver_str)?;
 
         // Files without an extension have a '.' at the end
         name = name.trim_right_matches('.');
 
-        ISOFile {
+        Ok(ISOFile {
             header,
             identifier: name.to_string(),
             version,
             file
-        }
+        })
     }
 
     pub fn read(&self) -> Result<Vec<u8>> {
