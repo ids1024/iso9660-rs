@@ -29,7 +29,9 @@ impl ISODirectory {
         let loc = *self.header.extent_loc;
         let len = *self.header.extent_length;
 
-        for block_num in 0..(len / 2048) {
+        let block_count = (len + 2048 - 1) / 2048; // ceil(len / 2048)
+
+        for block_num in 0..block_count {
             let block_len = cmp::min(len - 2048 * block_num, 2048);
             let block = read_block(&self.file, loc as u64 + block_num as u64)?;
 
