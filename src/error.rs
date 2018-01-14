@@ -5,14 +5,16 @@ use std::{io, str};
 #[derive(Debug)]
 pub enum ISOError {
     Io(io::Error),
-    Utf8(str::Utf8Error)
+    Utf8(str::Utf8Error),
+    InvalidFs(&'static str)
 }
 
 impl Display for ISOError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             ISOError::Io(ref err) => write!(f, "IO error: {}", err),
-            ISOError::Utf8(ref err) => write!(f, "UTF8 error: {}", err)
+            ISOError::Utf8(ref err) => write!(f, "UTF8 error: {}", err),
+            ISOError::InvalidFs(msg) => write!(f, "Invalid ISO9660: {}", msg),
         }
     }
 }
@@ -22,6 +24,7 @@ impl Error for ISOError {
         match *self {
             ISOError::Io(ref err) => err.description(),
             ISOError::Utf8(ref err) => err.description(),
+            ISOError::InvalidFs(_) => "Not a valid ISO9660 filesystem",
         }
     }
 
@@ -29,6 +32,7 @@ impl Error for ISOError {
         match *self {
             ISOError::Io(ref err) => Some(err),
             ISOError::Utf8(ref err) => Some(err),
+            _ => None,
         }
     }
 }

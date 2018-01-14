@@ -3,7 +3,7 @@
 #[macro_use]
 extern crate static_assertions;
 
-use std::io::{SeekFrom, Read, Seek, Error, ErrorKind};
+use std::io::{SeekFrom, Read, Seek};
 use std::fs::File;
 use std::path::Path;
 use std::cell::RefCell;
@@ -47,8 +47,7 @@ impl ISO9660 {
             let header = unsafe { &desc.header };
 
             if (&header.identifier, header.version) != (b"CD001", 1) {
-                // XXX Change error type
-                return Err(Error::new(ErrorKind::Other, "Not ISO9660").into())
+                return Err(ISOError::InvalidFs("'CD001' identifier missing"));
             }
 
             match header.type_code {
@@ -62,7 +61,7 @@ impl ISO9660 {
                         // This is almost always the case, but technically
                         // not guaranteed by the standard.
                         // TODO: Implement this
-                        return Err(Error::new(ErrorKind::Other, "Block size not 2048").into())
+                        return Err(ISOError::InvalidFs("Block size not 2048"));
                     }
 
                     root = Some(primary.root_directory_entry().clone());

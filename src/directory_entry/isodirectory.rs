@@ -1,10 +1,9 @@
-use std::io::{Error, ErrorKind};
 use std::{cmp, mem, ptr, str};
 use std::fs::File;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use ::{DirectoryEntry, ISOFile, read_block, Result};
+use ::{DirectoryEntry, ISOFile, read_block, Result, ISOError};
 use super::DirectoryEntryHeader;
 
 #[derive(Clone, Debug)]
@@ -54,23 +53,19 @@ impl ISODirectory {
                 }
 
                 if header.length < 34 {
-                    // XXX Change error type
-                    return Err(Error::new(ErrorKind::Other, "length < 34").into());
+                    return Err(ISOError::InvalidFs("length < 34"));
                 }
 
                 if header.length as u32 > 2048 - block_pos {
-                    // XXX Change error type
-                    return Err(Error::new(ErrorKind::Other, "length > left on block").into());
+                    return Err(ISOError::InvalidFs("length > left on block"));
                 }
 
                 if header.length % 2 != 0 {
-                    // XXX Change error type
-                    return Err(Error::new(ErrorKind::Other, "length % 2 != 0").into());
+                    return Err(ISOError::InvalidFs("length % 2 != 0"));
                 }
 
                 if header.file_identifier_len > header.length {
-                    // XXX Change error type
-                    return Err(Error::new(ErrorKind::Other, "identifer_len > len").into());
+                    return Err(ISOError::InvalidFs("identifer_len > length"));
                 }
 
                 // 33 is the size of the header without padding
