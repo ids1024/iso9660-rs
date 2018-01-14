@@ -2,7 +2,7 @@ use std::fs::File;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::mem;
-use std::io::Result;
+use ::Result;
 
 // NOTE: Technically the primary volume descriptor could specify a block size
 // ofther than 2048. That is not common in practice, but should probably be

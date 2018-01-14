@@ -3,23 +3,28 @@
 #[macro_use]
 extern crate static_assertions;
 
-use std::io::{Result, SeekFrom, Read, Seek, Error, ErrorKind};
+use std::io::{SeekFrom, Read, Seek, Error, ErrorKind};
 use std::fs::File;
 use std::path::Path;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::mem;
+use std::result;
 
 use volume_descriptor::VolumeDescriptor;
 
 pub use directory_entry::{DirectoryEntry, ISODirectory, ISOFile};
 pub(crate) use read_block::read_block;
+pub use error::ISOError;
+
+pub(crate) type Result<T> = result::Result<T, ISOError>;
 
 mod both_endian;
 mod volume_descriptor;
 mod directory_entry;
 mod datetime;
 mod read_block;
+mod error;
 
 pub struct ISO9660 {
     // TODO: Figure out if sane API possible without Rc/RefCell
@@ -43,7 +48,7 @@ impl ISO9660 {
 
             if (&header.identifier, header.version) != (b"CD001", 1) {
                 // XXX Change error type
-                return Err(Error::new(ErrorKind::Other, "Not ISO9660"))
+                return Err(Error::new(ErrorKind::Other, "Not ISO9660").into())
             }
 
             match header.type_code {
@@ -57,7 +62,7 @@ impl ISO9660 {
                         // This is almost always the case, but technically
                         // not guaranteed by the standard.
                         // TODO: Implement this
-                        return Err(Error::new(ErrorKind::Other, "Block size not 2048"))
+                        return Err(Error::new(ErrorKind::Other, "Block size not 2048").into())
                     }
 
                     root = Some(primary.root_directory_entry().clone());

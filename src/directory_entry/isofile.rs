@@ -2,10 +2,9 @@ use std::str::FromStr;
 use std::fs::File;
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::io::Result;
 
 use super::DirectoryEntryHeader;
-use ::read_block;
+use ::{read_block, Result};
 
 #[derive(Clone, Debug)]
 pub struct ISOFile {

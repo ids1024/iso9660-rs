@@ -1,10 +1,10 @@
-use std::io::{Result, Error, ErrorKind};
+use std::io::{Error, ErrorKind};
 use std::{cmp, mem, ptr, str};
 use std::fs::File;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use ::{DirectoryEntry, ISOFile, read_block};
+use ::{DirectoryEntry, ISOFile, read_block, Result};
 use super::DirectoryEntryHeader;
 
 #[derive(Clone, Debug)]
@@ -55,28 +55,27 @@ impl ISODirectory {
 
                 if header.length < 34 {
                     // XXX Change error type
-                    return Err(Error::new(ErrorKind::Other, "length < 34"));
+                    return Err(Error::new(ErrorKind::Other, "length < 34").into());
                 }
 
                 if header.length as u32 > 2048 - block_pos {
                     // XXX Change error type
-                    return Err(Error::new(ErrorKind::Other, "length > left on block"));
+                    return Err(Error::new(ErrorKind::Other, "length > left on block").into());
                 }
 
                 if header.length % 2 != 0 {
                     // XXX Change error type
-                    return Err(Error::new(ErrorKind::Other, "length % 2 != 0"));
+                    return Err(Error::new(ErrorKind::Other, "length % 2 != 0").into());
                 }
 
                 if header.file_identifier_len > header.length {
                     // XXX Change error type
-                    return Err(Error::new(ErrorKind::Other, "identifer_len > len"));
+                    return Err(Error::new(ErrorKind::Other, "identifer_len > len").into());
                 }
 
                 // 33 is the size of the header without padding
                 let end = header.file_identifier_len as usize + 33;
-                // XXX unwrap
-                let file_identifier = str::from_utf8(&entry[33..end]).unwrap();
+                let file_identifier = str::from_utf8(&entry[33..end])?;
 
 
                 // After the file identifier, ISO 9660 allows addition space for
