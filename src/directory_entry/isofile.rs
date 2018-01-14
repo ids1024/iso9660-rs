@@ -42,12 +42,14 @@ impl ISOFile {
         let len = *self.header.extent_length;
         let mut buf = Vec::new();
 
-        let mut block_num = 0;
-        while block_num * 2048 < len {
+        for block_num in 0..(len / 2048) {
             let block = read_block(&self.file, (loc + block_num) as u64)?;
-            let size = len as usize - 2048 * (block_num as usize);
-            buf.extend_from_slice(&block[0..size]);
-            block_num += 1;
+            buf.extend_from_slice(&block);
+        }
+
+        if len % 2048 != 0 {
+            let block = read_block(&self.file, (loc + len / 2048) as u64)?;
+            buf.extend_from_slice(&block[0..len as usize % 2048]);
         }
 
         Ok(buf)
