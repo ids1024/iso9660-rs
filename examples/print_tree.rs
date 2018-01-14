@@ -25,14 +25,14 @@ fn print_tree(dir: &ISODirectory, level: u32) {
                 if dir.identifier == "\0" || dir.identifier == "\u{1}" {
                     continue;
                 }
-                for i in 0..level {
+                for _i in 0..level {
                     print!("  ");
                 }
                 println!("- {}/", dir.identifier);
                 print_tree(&dir, level+1);
             },
             DirectoryEntry::File(file) => {
-                for i in 0..level {
+                for _i in 0..level {
                     print!("  ");
                 }
                 println!("- {}", file.identifier);
