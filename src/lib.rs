@@ -35,6 +35,8 @@ pub struct ISO9660 {
 impl ISO9660 {
     pub fn new<P: AsRef<Path>>(path: P) -> Result<ISO9660> {
         let mut file = File::open(&path)?;
+        // Using uninitialized is safe for reasons addressed in read_block.rs
+        // Using VolumeDescriptor with potentially arbirary data is safe
         let mut desc: VolumeDescriptor = unsafe { mem::uninitialized() };
         let mut root = None;
 
@@ -43,7 +45,18 @@ impl ISO9660 {
 
         // Read volume descriptors
         loop {
-            file.read(unsafe { &mut *(&mut desc as *mut _ as *mut [u8; 2048]) })?;
+            {
+                let buf = unsafe {
+                    &mut *(&mut desc as *mut _ as *mut [u8; 2048])
+                };
+
+                let count = file.read(buf)?;
+
+                if count != 2048 {
+                    return Err(ISOError::BlockReadSize(count));
+                }
+            }
+
             let header = unsafe { &desc.header };
 
             if (&header.identifier, header.version) != (b"CD001", 1) {
