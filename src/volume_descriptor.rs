@@ -51,7 +51,6 @@ pub struct PrimaryVolumeDescriptor {
     pub abstract_file_identifier: [u8; 36],
     pub bibliographic_file_identifier: [u8; 37],
 
-    // XXX create a struct for times
     pub creation_time: DateTimeAscii,
     pub modification_time: DateTimeAscii,
     pub expiration_time: DateTimeAscii,
