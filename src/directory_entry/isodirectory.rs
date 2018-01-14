@@ -4,7 +4,7 @@ use std::fs::File;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use ::{DirectoryEntry, ISOFile, Block};
+use ::{DirectoryEntry, ISOFile, read_block};
 use super::DirectoryEntryHeader;
 
 #[derive(Clone, Debug)]
@@ -34,12 +34,12 @@ impl ISODirectory {
         let mut block_num: u32 = 0;
         while block_num < blocks {
             let block_len = cmp::min(len - 2048 * block_num, 2048);
-            let block = Block::read(&self.file, loc as u64 + block_num as u64)?;
+            let block = read_block(&self.file, loc as u64 + block_num as u64)?;
 
             let mut block_pos: u32 = 0;
             while block_pos < block_len {
                 let mut header: DirectoryEntryHeader = unsafe { mem::uninitialized() };
-                let entry = unsafe { &block.bytes[block_pos as usize..] };
+                let entry = &block[block_pos as usize..];
                 unsafe {
                     // Accounts for padding, which is needed for alignment
                     // TODO: Better solution

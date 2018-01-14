@@ -5,7 +5,7 @@ use std::rc::Rc;
 use std::io::Result;
 
 use super::DirectoryEntryHeader;
-use ::Block;
+use ::read_block;
 
 #[derive(Clone, Debug)]
 pub struct ISOFile {
@@ -46,9 +46,9 @@ impl ISOFile {
 
         let mut block_num = 0;
         while block_num * 2048 < len {
-            let block = Block::read(&self.file, (loc + block_num) as u64)?;
+            let block = read_block(&self.file, (loc + block_num) as u64)?;
             let size = len as usize - 2048 * (block_num as usize);
-            buf.extend_from_slice(unsafe { &block.bytes[0..size] });
+            buf.extend_from_slice(&block[0..size]);
             block_num += 1;
         }
 

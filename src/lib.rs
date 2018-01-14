@@ -10,14 +10,16 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::mem;
 
+use volume_descriptor::VolumeDescriptor;
+
 pub use directory_entry::{DirectoryEntry, ISODirectory, ISOFile};
-pub(crate) use block::Block;
+pub(crate) use read_block::read_block;
 
 mod both_endian;
 mod volume_descriptor;
 mod directory_entry;
 mod datetime;
-mod block;
+mod read_block;
 
 pub struct ISO9660 {
     // TODO: Figure out if sane API possible without Rc/RefCell
@@ -28,7 +30,7 @@ pub struct ISO9660 {
 impl ISO9660 {
     pub fn new<P: AsRef<Path>>(path: P) -> Result<ISO9660> {
         let mut file = File::open(&path)?;
-        let mut block: Block = unsafe { mem::uninitialized() };
+        let mut desc: VolumeDescriptor = unsafe { mem::uninitialized() };
         let mut root = None;
 
         // Skip the "system area"
@@ -36,8 +38,7 @@ impl ISO9660 {
 
         // Read volume descriptors
         loop {
-            file.read(unsafe { &mut block.bytes })?;
-            let desc = unsafe { &block.volume_descriptor };
+            file.read(unsafe { &mut *(&mut desc as *mut _ as *mut [u8; 2048]) })?;
             let header = unsafe { &desc.header };
 
             if (&header.identifier, header.version) != (b"CD001", 1) {
@@ -85,5 +86,3 @@ impl ISO9660 {
     }
 
 }
-
-assert_eq_size!(block_size_eq; Block, [u8; 2048]);
