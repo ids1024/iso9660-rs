@@ -28,7 +28,7 @@ fn print_tree(dir: &ISODirectory, level: u32) {
                 for i in 0..level {
                     print!("  ");
                 }
-                println!("* {}", dir.identifier);
+                println!("- {}/", dir.identifier);
                 print_tree(&dir, level+1);
             },
             DirectoryEntry::File(file) => {
