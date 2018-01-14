@@ -14,7 +14,8 @@ impl FileRef {
 
     /// Read the block(s) at a given LBA (logical block address)
     pub fn read_at(&self, buf: &mut [u8], lba: u64) -> Result<usize> {
-        let file = (*self.0).borrow_mut();
+        #[allow(unused_mut)]
+        let mut file = (*self.0).borrow_mut();
 
         #[cfg(unix)]
         {
