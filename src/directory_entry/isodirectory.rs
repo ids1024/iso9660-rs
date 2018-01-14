@@ -29,9 +29,7 @@ impl ISODirectory {
         let loc = *self.header.extent_loc;
         let len = *self.header.extent_length;
 
-        let blocks = len / 2048;
-        let mut block_num: u32 = 0;
-        while block_num < blocks {
+        for block_num in 0..(len / 2048) {
             let block_len = cmp::min(len - 2048 * block_num, 2048);
             let block = read_block(&self.file, loc as u64 + block_num as u64)?;
 
@@ -94,8 +92,6 @@ impl ISODirectory {
 
                 entries.push(entry);
             }
-
-            block_num += 1;
         }
 
         Ok(entries)
