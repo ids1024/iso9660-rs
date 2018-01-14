@@ -92,10 +92,17 @@ impl ISO9660 {
         let file = Rc::new(RefCell::new(file));
         let file2 = file.clone();
 
+        let root = match root {
+            Some(root) => root,
+            None => {
+                return Err(ISOError::InvalidFs("No primary volume descriptor"));
+            }
+        };
+
         Ok(ISO9660 {
             _file: file,
             root: ISODirectory::new(
-                root.unwrap(),
+                root,
                 "\0".to_string(), // XXX actually read from disk
                 file2
                 )
