@@ -46,7 +46,7 @@ impl ISODirectory {
                 }
 
                 if header.length == 0 {
-                    // XXX ?
+                    // All bytes after the last directory entry are zero.
                     break;
                 }
 
