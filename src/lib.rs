@@ -6,15 +6,13 @@ extern crate static_assertions;
 use std::io::{SeekFrom, Read, Seek};
 use std::fs::File;
 use std::path::Path;
-use std::cell::RefCell;
-use std::rc::Rc;
 use std::mem;
 use std::result;
 
 use volume_descriptor::VolumeDescriptor;
 
 pub use directory_entry::{DirectoryEntry, ISODirectory, ISOFile};
-pub(crate) use read_block::read_block;
+pub(crate) use fileref::FileRef;
 pub use error::ISOError;
 
 pub(crate) type Result<T> = result::Result<T, ISOError>;
@@ -23,12 +21,11 @@ mod both_endian;
 mod volume_descriptor;
 mod directory_entry;
 mod datetime;
-mod read_block;
+mod fileref;
 mod error;
 
 pub struct ISO9660 {
-    // TODO: Figure out if sane API possible without Rc/RefCell
-    _file: Rc<RefCell<File>>,
+    _file: FileRef,
     pub root: ISODirectory
 }
 
@@ -53,7 +50,7 @@ impl ISO9660 {
                 let count = file.read(buf)?;
 
                 if count != 2048 {
-                    return Err(ISOError::BlockReadSize(count));
+                    return Err(ISOError::ReadSize(2048, count));
                 }
             }
 
@@ -89,7 +86,7 @@ impl ISO9660 {
             }
         }
 
-        let file = Rc::new(RefCell::new(file));
+        let file = FileRef::new(file);
         let file2 = file.clone();
 
         let root = match root {

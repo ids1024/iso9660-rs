@@ -9,7 +9,7 @@ pub enum ISOError {
     Utf8(str::Utf8Error),
     InvalidFs(&'static str),
     ParseInt(ParseIntError),
-    BlockReadSize(usize),
+    ReadSize(usize, usize),
 }
 
 impl Display for ISOError {
@@ -19,8 +19,9 @@ impl Display for ISOError {
             ISOError::Utf8(ref err) => write!(f, "UTF8 error: {}", err),
             ISOError::InvalidFs(msg) => write!(f, "Invalid ISO9660: {}", msg),
             ISOError::ParseInt(ref err) => write!(f, "Int parse error: {}", err),
-            ISOError::BlockReadSize(size) =>
-                write!(f, "Reading 2048 byte block returned '{}' bytes", size),
+            ISOError::ReadSize(size, size_read) =>
+                write!(f, "Reading '{}' bytes block returned '{}' bytes",
+                       size, size_read),
         }
     }
 }
@@ -32,7 +33,7 @@ impl Error for ISOError {
             ISOError::Utf8(ref err) => err.description(),
             ISOError::InvalidFs(_) => "Not a valid ISO9660 filesystem",
             ISOError::ParseInt(ref err) => err.description(),
-            ISOError::BlockReadSize(_) => "Reading block returned too few bytes",
+            ISOError::ReadSize(_, _) => "Read returned too few bytes",
         }
     }
 

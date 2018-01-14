@@ -1,10 +1,7 @@
 use std::str::FromStr;
-use std::fs::File;
-use std::cell::RefCell;
-use std::rc::Rc;
 
 use super::DirectoryEntryHeader;
-use ::{read_block, Result, ISOError};
+use ::{FileRef, Result, ISOError};
 
 #[derive(Clone, Debug)]
 pub struct ISOFile {
@@ -12,11 +9,11 @@ pub struct ISOFile {
     pub identifier: String,
     // File version; ranges from 1 to 32767
     pub version: u16,
-    file: Rc<RefCell<File>>
+    file: FileRef
 }
 
 impl ISOFile {
-    pub(crate) fn new(header: DirectoryEntryHeader, identifier: &str, file: Rc<RefCell<File>>) -> Result<ISOFile> {
+    pub(crate) fn new(header: DirectoryEntryHeader, identifier: &str, file: FileRef) -> Result<ISOFile> {
         // Files (not directories) in ISO 9660 have a version number, which is
         // provided at the end of the identifier, seperated by ';'
         let error = ISOError::InvalidFs("File indentifier missing ';'");
@@ -38,20 +35,20 @@ impl ISOFile {
     }
 
     pub fn read(&self) -> Result<Vec<u8>> {
-        let loc = *self.header.extent_loc;
-        let len = *self.header.extent_length;
-        let mut buf = Vec::new();
+        let loc = *self.header.extent_loc as u64;
+        let len = *self.header.extent_length as usize;
 
-        for block_num in 0..(len / 2048) {
-            let block = read_block(&self.file, (loc + block_num) as u64)?;
-            buf.extend_from_slice(&block);
+        // Should use safe API if possible:
+        // https://github.com/rust-lang/rust/issues/42788
+        let mut buf = Vec::with_capacity(len);
+        unsafe { buf.set_len(len) };
+
+        let count = self.file.read_at(buf.as_mut_slice(), loc)?;
+
+        if count == len {
+            Ok(buf)
+        } else {
+            Err(ISOError::ReadSize(len, count))
         }
-
-        if len % 2048 != 0 {
-            let block = read_block(&self.file, (loc + len / 2048) as u64)?;
-            buf.extend_from_slice(&block[0..len as usize % 2048]);
-        }
-
-        Ok(buf)
     }
 }

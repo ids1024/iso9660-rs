@@ -1,20 +1,17 @@
 use std::{cmp, mem, ptr, str};
-use std::fs::File;
-use std::cell::RefCell;
-use std::rc::Rc;
 
-use ::{DirectoryEntry, ISOFile, read_block, Result, ISOError};
+use ::{DirectoryEntry, ISOFile, FileRef, Result, ISOError};
 use super::DirectoryEntryHeader;
 
 #[derive(Clone, Debug)]
 pub struct ISODirectory {
     pub(crate) header: DirectoryEntryHeader,
     pub identifier: String,
-    file: Rc<RefCell<File>>
+    file: FileRef
 }
 
 impl ISODirectory {
-    pub(crate) fn new(header: DirectoryEntryHeader, identifier: String, file: Rc<RefCell<File>>) -> ISODirectory {
+    pub(crate) fn new(header: DirectoryEntryHeader, identifier: String, file: FileRef) -> ISODirectory {
         ISODirectory {
             header,
             identifier,
@@ -30,10 +27,16 @@ impl ISODirectory {
         let len = *self.header.extent_length;
 
         let block_count = (len + 2048 - 1) / 2048; // ceil(len / 2048)
+        let mut block: [u8; 2048] = unsafe { mem::uninitialized() };
 
         for block_num in 0..block_count {
             let block_len = cmp::min(len - 2048 * block_num, 2048);
-            let block = read_block(&self.file, loc as u64 + block_num as u64)?;
+            let count = self.file.read_at(&mut block, loc as u64 + block_num as u64)?;
+
+            if count != 2048 {
+                return Err(ISOError::ReadSize(2048, count));
+            }
+
 
             let mut block_pos: u32 = 0;
             while block_pos < block_len {
