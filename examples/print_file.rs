@@ -1,6 +1,6 @@
 extern crate iso9660;
 
-use std::io::{self, Write};
+use std::io::{self, Write, Read};
 use std::{env, process};
 
 use iso9660::{ISO9660, ISODirectory, DirectoryEntry};
@@ -34,9 +34,10 @@ fn main() {
     }
 
     match find_entry(&parent, file_name) {
-        Some(DirectoryEntry::File(file)) => {
+        Some(DirectoryEntry::File(mut file)) => {
             let mut stdout = io::stdout();
-            let text = file.read().unwrap();
+            let mut text = Vec::new();
+            file.read_to_end(&mut text).unwrap();
             stdout.write(&text).unwrap();
         }
         Some(_) => panic!("{} is not a file.", file_name),
