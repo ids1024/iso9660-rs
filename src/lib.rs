@@ -106,4 +106,21 @@ impl ISO9660 {
         })
     }
 
+    pub fn open(&self, path: &str) -> Result<Option<DirectoryEntry>> {
+        let mut entry = DirectoryEntry::Directory(self.root.clone());
+        for segment in path.to_uppercase().split('/') {
+            let parent = match entry {
+                DirectoryEntry::Directory(dir) => dir,
+                _ => return Ok(None)
+            };
+
+            entry = match parent.find(segment).unwrap() {
+                Some(entry) => entry,
+                None => return Ok(None)
+            };
+
+        }
+
+        Ok(Some(entry))
+    }
 }
