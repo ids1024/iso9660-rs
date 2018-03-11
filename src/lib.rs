@@ -15,7 +15,7 @@ pub use directory_entry::{DirectoryEntry, ISODirectory, ISOFile};
 pub(crate) use fileref::FileRef;
 pub use error::ISOError;
 
-pub(crate) type Result<T> = result::Result<T, ISOError>;
+pub type Result<T> = result::Result<T, ISOError>;
 
 mod both_endian;
 mod volume_descriptor;
