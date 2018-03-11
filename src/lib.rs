@@ -124,4 +124,8 @@ impl ISO9660 {
 
         Ok(Some(entry))
     }
+
+    pub fn block_size(&self) -> u16 {
+        2048 // XXX
+    }
 }
