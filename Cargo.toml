@@ -5,3 +5,4 @@ authors = ["Ian Douglas Scott <ian@iandouglasscott.com>"]
 
 [dependencies]
 static_assertions = "0.2"
+time = "0.1"

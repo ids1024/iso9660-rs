@@ -2,6 +2,7 @@
 
 #[macro_use]
 extern crate static_assertions;
+extern crate time;
 
 use std::io::{SeekFrom, Read, Seek};
 use std::fs::File;

@@ -4,6 +4,8 @@ use std::cmp::min;
 use std::mem;
 use std::fmt;
 
+use time::Tm;
+
 use super::DirectoryEntryHeader;
 use ::{FileRef, Result, ISOError};
 
@@ -57,6 +59,10 @@ impl ISOFile {
 
     pub fn size(&self) -> u32 {
         *self.header.extent_length
+    }
+
+    pub fn time(&self) -> Tm {
+        self.header.time.to_tm()
     }
 
     /*
