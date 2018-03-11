@@ -107,6 +107,7 @@ impl ISO9660 {
     }
 
     pub fn open(&self, path: &str) -> Result<Option<DirectoryEntry>> {
+        // TODO: avoid clone()
         let mut entry = DirectoryEntry::Directory(self.root.clone());
         for segment in path.to_uppercase().split('/') {
             let parent = match entry {
