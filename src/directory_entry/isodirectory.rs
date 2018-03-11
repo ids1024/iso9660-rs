@@ -1,5 +1,7 @@
 use std::{mem, ptr, str};
 
+use time::Tm;
+
 use ::{DirectoryEntry, ISOFile, FileRef, Result, ISOError};
 use super::DirectoryEntryHeader;
 
@@ -44,6 +46,10 @@ impl ISODirectory {
             block_pos: 0,
             have_block: false
         }
+    }
+
+    pub fn time(&self) -> Tm {
+        self.header.time.to_tm()
     }
 
     pub fn find(&self, identifier: &str) -> Result<Option<DirectoryEntry>> {
