@@ -93,7 +93,7 @@ impl Read for ISOFile {
             }
 
             let start = seek as usize % 2048;
-            let end = min(self.size() as usize - seek as usize, 2048);
+            let end = min(self.size() as usize - (seek as usize / 2048) * 2048, 2048);
             seek += buf.write(&self.buf[start..end]).unwrap() as u64;
         }
 
