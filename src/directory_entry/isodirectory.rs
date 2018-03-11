@@ -45,6 +45,25 @@ impl ISODirectory {
             have_block: false
         }
     }
+
+    pub fn find(&self, identifier: &str) -> Result<Option<DirectoryEntry>> {
+        for entry in self.contents() {
+            match entry? {
+                DirectoryEntry::Directory(dir) => {
+                    if dir.identifier == identifier {
+                        return Ok(Some(DirectoryEntry::Directory(dir)));
+                    }
+                }
+                DirectoryEntry::File(file) => {
+                    if file.identifier == identifier {
+                        return Ok(Some(DirectoryEntry::File(file)));
+                    }
+                }
+            }
+        }
+
+        Ok(None)
+    }
 }
 
 pub struct ISODirectoryIterator {

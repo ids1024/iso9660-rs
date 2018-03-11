@@ -3,7 +3,7 @@ extern crate iso9660;
 use std::io::{self, Write, Read};
 use std::{env, process};
 
-use iso9660::{ISO9660, ISODirectory, DirectoryEntry};
+use iso9660::{ISO9660, DirectoryEntry};
 
 fn main() {
     let args = env::args();
@@ -22,7 +22,7 @@ fn main() {
     let mut segments = file_path.split('/');
     let file_name = segments.next_back().unwrap();
     for segment in segments {
-        let entry = match find_entry(&parent, segment) {
+        let entry = match parent.find(segment).unwrap() {
             Some(entry) => entry,
             None => panic!("'{}' not found", segment)
         };
@@ -33,7 +33,7 @@ fn main() {
         }
     }
 
-    match find_entry(&parent, file_name) {
+    match parent.find(file_name).unwrap() {
         Some(DirectoryEntry::File(mut file)) => {
             let mut stdout = io::stdout();
             let mut text = Vec::new();
@@ -43,23 +43,4 @@ fn main() {
         Some(_) => panic!("{} is not a file.", file_name),
         None => panic!("'{}' not found", file_name)
     }
-}
-
-fn find_entry(dir: &ISODirectory, identifier: &str) -> Option<DirectoryEntry> {
-    for entry in dir.contents() {
-        match entry.unwrap() {
-            DirectoryEntry::Directory(dir) => {
-                if dir.identifier == identifier {
-                    return Some(DirectoryEntry::Directory(dir));
-                }
-            }
-            DirectoryEntry::File(file) => {
-                if file.identifier == identifier {
-                    return Some(DirectoryEntry::File(file));
-                }
-            }
-        }
-    }
-
-    None
 }
