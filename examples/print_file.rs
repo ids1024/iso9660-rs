@@ -46,8 +46,8 @@ fn main() {
 }
 
 fn find_entry(dir: &ISODirectory, identifier: &str) -> Option<DirectoryEntry> {
-    for entry in dir.contents().unwrap() {
-        match entry {
+    for entry in dir.contents() {
+        match entry.unwrap() {
             DirectoryEntry::Directory(dir) => {
                 if dir.identifier == identifier {
                     return Some(DirectoryEntry::Directory(dir));
