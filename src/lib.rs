@@ -111,6 +111,10 @@ impl ISO9660 {
         // TODO: avoid clone()
         let mut entry = DirectoryEntry::Directory(self.root.clone());
         for segment in path.to_uppercase().split('/') {
+            if segment.is_empty() {
+                continue;
+            }
+
             let parent = match entry {
                 DirectoryEntry::Directory(dir) => dir,
                 _ => return Ok(None)
