@@ -64,26 +64,6 @@ impl ISOFile {
     pub fn time(&self) -> Tm {
         self.header.time.to_tm()
     }
-
-    /*
-    pub fn read(&self) -> Result<Vec<u8>> {
-        let loc = *self.header.extent_loc as u64;
-        let len = *self.header.extent_length as usize;
-
-        // Should use safe API if possible:
-        // https://github.com/rust-lang/rust/issues/42788
-        let mut buf = Vec::with_capacity(len);
-        unsafe { buf.set_len(len) };
-
-        let count = self.file.read_at(buf.as_mut_slice(), loc)?;
-
-        if count == len {
-            Ok(buf)
-        } else {
-            Err(ISOError::ReadSize(len, count))
-        }
-    }
-    */
 }
 
 impl Read for ISOFile {
