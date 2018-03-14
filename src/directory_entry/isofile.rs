@@ -1,5 +1,5 @@
 use std::str::FromStr;
-use std::io::{self, Read, Seek, SeekFrom, Write};
+use std::io::{self, Read, Seek, SeekFrom, Write, Initializer};
 use std::cmp::min;
 use std::mem;
 use std::fmt;
@@ -67,6 +67,10 @@ impl ISOFile {
 }
 
 impl Read for ISOFile {
+    unsafe fn initializer(&self) -> Initializer {
+        Initializer::nop()
+    }
+
     fn read(&mut self, mut buf: &mut [u8]) -> io::Result<usize> {
         let start_lba = self.header.extent_loc.get();
 
