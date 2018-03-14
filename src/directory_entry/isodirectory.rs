@@ -92,7 +92,7 @@ impl Iterator for ISODirectoryIterator {
 
         // If we have reached the end of one block, read another
         if !self.have_block ||
-           self.block_pos >= 2048 ||
+           self.block_pos >= (2048 - 33) ||
            // All bytes after the last directory entry are zero.
            self.block[self.block_pos as usize] == 0 {
 
