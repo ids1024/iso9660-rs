@@ -3,7 +3,7 @@ use std::{mem, str};
 use time::Tm;
 
 use ::{DirectoryEntry, ISOFile, FileRef, Result, ISOError};
-use super::DirectoryEntryHeader;
+use super::{DirectoryEntryHeader, FileFlags};
 
 // Like try!, but wrap in Some()
 macro_rules! try_some {
@@ -144,7 +144,7 @@ impl Iterator for ISODirectoryIterator {
 
         self.block_pos += header.length as u32;
 
-        let entry = if header.is_directory() {
+        let entry = if header.file_flags.contains(FileFlags::DIRECTORY) {
             DirectoryEntry::Directory(ISODirectory::new(
                 header.clone(),
                 file_identifier.to_string(),

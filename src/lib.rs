@@ -6,6 +6,8 @@
 extern crate static_assertions;
 extern crate time;
 extern crate byteorder;
+#[macro_use]
+extern crate bitflags;
 
 use std::io::{SeekFrom, Read, Seek};
 use std::fs::File;

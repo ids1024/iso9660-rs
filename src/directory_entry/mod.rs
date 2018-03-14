@@ -7,6 +7,18 @@ pub use self::isofile::ISOFile;
 mod isodirectory;
 mod isofile;
 
+bitflags! {
+    pub struct FileFlags: u8 {
+        const EXISTANCE = 1 << 0;
+        const DIRECTORY = 1 << 1;
+        const ASSOCIATEDFILEF = 1 << 2;
+        const RECORD = 1 << 3;
+        const PROTECTION = 1 << 4;
+        // Bits 5 and 6 are reserved; should be zero
+        const MULTIEXTENT = 1 << 7;
+    }
+}
+
 #[repr(C)]
 #[derive(Clone, Debug)]
 pub struct DirectoryEntryHeader {
@@ -15,17 +27,11 @@ pub struct DirectoryEntryHeader {
     pub extent_loc: BothEndian32,
     pub extent_length: BothEndian32,
     pub time: DateTime,
-    pub file_flags: u8,
+    pub file_flags: FileFlags,
     pub file_unit_size: u8,
     pub interleave_gap_size: u8,
     pub volume_sequence_number: BothEndian16,
     pub file_identifier_len: u8,
-}
-
-impl DirectoryEntryHeader {
-    pub fn is_directory(&self) -> bool {
-        self.file_flags & (1 << 1) != 0
-    }
 }
 
 #[derive(Clone, Debug)]
