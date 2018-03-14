@@ -37,7 +37,7 @@ impl ISOFile {
         // Files (not directories) in ISO 9660 have a version number, which is
         // provided at the end of the identifier, seperated by ';'
         let error = ISOError::InvalidFs("File indentifier missing ';'");
-        let idx = identifier.rfind(";").ok_or(error)?;
+        let idx = identifier.rfind(';').ok_or(error)?;
 
         let ver_str = &identifier[idx+1..];
         let mut name = &identifier[..idx];
@@ -91,7 +91,7 @@ impl Read for ISOFile {
         let start_lba = *self.header.extent_loc;
 
         let mut seek = self.seek;
-        while buf.len() > 0 && seek < self.size() as u64 {
+        while !buf.is_empty() && seek < self.size() as u64 {
             let lba = start_lba as u64 + (seek / 2048);
             if self.buf_lba != Some(lba) {
                 self.file.read_at(&mut self.buf, lba)?;

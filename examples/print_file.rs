@@ -23,7 +23,7 @@ fn main() {
             let mut stdout = io::stdout();
             let mut text = Vec::new();
             file.read_to_end(&mut text).unwrap();
-            stdout.write(&text).unwrap();
+            stdout.write_all(&text).unwrap();
         }
         Some(_) => panic!("{} is not a file.", file_path),
         None => panic!("'{}' not found", file_path)
