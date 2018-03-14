@@ -10,7 +10,6 @@ mod isofile;
 #[repr(C)]
 #[derive(Clone, Debug)]
 pub struct DirectoryEntryHeader {
-    _pad1: [u8; 2],
     pub length: u8,
     pub extended_attribute_record_length: u8,
     pub extent_loc: BothEndian32,
@@ -21,7 +20,6 @@ pub struct DirectoryEntryHeader {
     pub interleave_gap_size: u8,
     pub volume_sequence_number: BothEndian16,
     pub file_identifier_len: u8,
-    _pad2: u8,
 }
 
 impl DirectoryEntryHeader {
@@ -36,4 +34,4 @@ pub enum DirectoryEntry {
     File(ISOFile)
 }
 
-assert_eq_size!(directory_hdr_size_eq; DirectoryEntryHeader, [u8; 36]);
+assert_eq_size!(directory_hdr_size_eq; DirectoryEntryHeader, [u8; 33]);

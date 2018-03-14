@@ -41,7 +41,8 @@ pub struct PrimaryVolumeDescriptor {
     pub path_table_loc_be: u32,
     pub optional_path_table_loc_be: u32,
 
-    _root_directory_entry: [u8; 34],
+    pub root_directory_entry: DirectoryEntryHeader,
+    _pad5: u8,
 
     pub volume_set_identifier: [u8; 128],
     pub publisher_identifier: [u8; 128],
@@ -57,20 +58,7 @@ pub struct PrimaryVolumeDescriptor {
     pub effective_time: DateTimeAscii,
 
     pub file_structure_version: u8,
-    _pad5: [u8; 1166]
-}
-
-impl PrimaryVolumeDescriptor {
-    pub fn root_directory_entry(&self) -> &DirectoryEntryHeader {
-        // This deals with alignment, since PrimaryVolumeDescriptor
-        // has no padding around the directory entry field, but it is
-        // aligned correctly. This allows DirectoryEntryHeader to not
-        // be repr(packed)
-
-        // TODO: use safer and cleaner solution if possible
-        let root_ptr = &self._root_directory_entry as *const u8;
-        unsafe { &*(root_ptr.offset(-2) as *const DirectoryEntryHeader) }
-    }
+    _pad6: [u8; 1166]
 }
 
 assert_eq_size!(vol_desc_size_eq; VolumeDescriptor, [u8; 2048]);

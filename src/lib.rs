@@ -1,8 +1,10 @@
 #![feature(untagged_unions)]
+#![feature(repr_transparent)]
 
 #[macro_use]
 extern crate static_assertions;
 extern crate time;
+extern crate byteorder;
 
 use std::io::{SeekFrom, Read, Seek};
 use std::fs::File;
@@ -68,14 +70,14 @@ impl ISO9660 {
                 1 => {
                     let primary = unsafe { &desc.primary };
 
-                    if *primary.logical_block_size != 2048 {
+                    if primary.logical_block_size.get() != 2048 {
                         // This is almost always the case, but technically
                         // not guaranteed by the standard.
                         // TODO: Implement this
                         return Err(ISOError::InvalidFs("Block size not 2048"));
                     }
 
-                    root = Some(primary.root_directory_entry().clone());
+                    root = Some(primary.root_directory_entry.clone());
                 },
                 // Supplementary volume descriptor
                 2 => {}

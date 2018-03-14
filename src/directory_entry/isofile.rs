@@ -58,7 +58,7 @@ impl ISOFile {
     }
 
     pub fn size(&self) -> u32 {
-        *self.header.extent_length
+        self.header.extent_length.get()
     }
 
     pub fn time(&self) -> Tm {
@@ -88,7 +88,7 @@ impl ISOFile {
 
 impl Read for ISOFile {
     fn read(&mut self, mut buf: &mut [u8]) -> io::Result<usize> {
-        let start_lba = *self.header.extent_loc;
+        let start_lba = self.header.extent_loc.get();
 
         let mut seek = self.seek;
         while !buf.is_empty() && seek < self.size() as u64 {

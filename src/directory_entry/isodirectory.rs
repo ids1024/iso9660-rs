@@ -1,4 +1,4 @@
-use std::{mem, ptr, str};
+use std::{mem, str};
 
 use time::Tm;
 
@@ -35,10 +35,10 @@ impl ISODirectory {
 
     // TODO: Iterator? Perhaps using generator?
     pub fn contents(&self) -> ISODirectoryIterator {
-        let len = *self.header.extent_length;
+        let len = self.header.extent_length.get();
 
         ISODirectoryIterator {
-            loc: *self.header.extent_loc,
+            loc: self.header.extent_loc.get(),
             block_count: (len + 2048 - 1) / 2048, // ceil(len / 2048)
             file: self.file.clone(),
             block: unsafe { mem::uninitialized() },
@@ -115,15 +115,8 @@ impl Iterator for ISODirectoryIterator {
             }
          }
 
-        let entry = &self.block[self.block_pos as usize..];
-        let mut header: DirectoryEntryHeader = unsafe { mem::uninitialized() };
-        unsafe {
-            // Accounts for padding, which is needed for alignment
-            // TODO: Better solution
-            ptr::copy_nonoverlapping(entry.as_ptr(),
-                                     (&mut header as *mut _ as *mut u8).offset(2),
-                                     33);
-        }
+        let header = unsafe { &*(self.block[self.block_pos as usize..].as_ptr()
+                                 as *const DirectoryEntryHeader) };
 
         if header.length < 34 {
             return Some(Err(ISOError::InvalidFs("length < 34")));
@@ -142,8 +135,9 @@ impl Iterator for ISODirectoryIterator {
         }
 
         // 33 is the size of the header without padding
-        let end = header.file_identifier_len as usize + 33;
-        let file_identifier = try_some!(str::from_utf8(&entry[33..end]));
+        let start = self.block_pos as usize + 33;
+        let end = start + header.file_identifier_len as usize;
+        let file_identifier = try_some!(str::from_utf8(&self.block[start..end]));
 
         // After the file identifier, ISO 9660 allows addition space for
         // system use. Ignore that for now.
@@ -152,13 +146,13 @@ impl Iterator for ISODirectoryIterator {
 
         let entry = if header.is_directory() {
             DirectoryEntry::Directory(ISODirectory::new(
-                header,
+                header.clone(),
                 file_identifier.to_string(),
                 self.file.clone()
             ))
         } else {
             DirectoryEntry::File(try_some!(ISOFile::new(
-                header,
+                header.clone(),
                 file_identifier,
                 self.file.clone()
             )))
