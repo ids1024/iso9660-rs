@@ -5,16 +5,19 @@ use std::fmt::{Debug, Formatter, Result};
 
 use byteorder::{ByteOrder, LittleEndian};
 
-#[repr(transparent)]
+#[repr(C)]
 #[derive(Clone)]
-pub struct BothEndian16([u8; 4]);
+pub struct BothEndian16 {
+    le: [u8; 2],
+    be: [u8; 2]
+}
 
 impl BothEndian16 {
     pub(crate) fn get(&self) -> u16 {
         // Only reading the little endian version, which is first.
         // The Linux kernel does the same, with a comment about some programs
         // generating invalid ISO with incorrect big endian values.
-        LittleEndian::read_u16(&self.0)
+        LittleEndian::read_u16(&self.le)
     }
 }
 
@@ -26,13 +29,16 @@ impl Debug for BothEndian16 {
     }
 }
 
-#[repr(transparent)]
+#[repr(C)]
 #[derive(Clone)]
-pub struct BothEndian32([u8; 8]);
+pub struct BothEndian32{
+    le: [u8; 4],
+    be: [u8; 4]
+}
 
 impl BothEndian32 {
     pub(crate) fn get(&self) -> u32 {
-        LittleEndian::read_u32(&self.0)
+        LittleEndian::read_u32(&self.le)
     }
 }
 
@@ -43,3 +49,6 @@ impl Debug for BothEndian32 {
             .finish()
     }
 }
+
+assert_eq_size!(bothend16_size_eq; BothEndian16, [u8; 4]);
+assert_eq_size!(bothend32_size_eq; BothEndian32, [u8; 8]);
