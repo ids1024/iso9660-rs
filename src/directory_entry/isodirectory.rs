@@ -56,12 +56,12 @@ impl ISODirectory {
         for entry in self.contents() {
             match entry? {
                 DirectoryEntry::Directory(dir) => {
-                    if dir.identifier == identifier {
+                    if dir.identifier.eq_ignore_ascii_case(identifier) {
                         return Ok(Some(DirectoryEntry::Directory(dir)));
                     }
                 }
                 DirectoryEntry::File(file) => {
-                    if file.identifier == identifier {
+                    if file.identifier.eq_ignore_ascii_case(identifier) {
                         return Ok(Some(DirectoryEntry::File(file)));
                     }
                 }
