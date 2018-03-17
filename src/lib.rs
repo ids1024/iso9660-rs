@@ -1,5 +1,4 @@
 #![feature(untagged_unions)]
-#![feature(repr_transparent)]
 #![feature(read_initializer)]
 
 #[macro_use]
