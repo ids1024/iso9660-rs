@@ -114,11 +114,7 @@ impl ISO9660 {
     pub fn open(&self, path: &str) -> Result<Option<DirectoryEntry>> {
         // TODO: avoid clone()
         let mut entry = DirectoryEntry::Directory(self.root.clone());
-        for segment in path.split('/') {
-            if segment.is_empty() {
-                continue;
-            }
-
+        for segment in path.split('/').filter(|x| !x.is_empty()) {
             let parent = match entry {
                 DirectoryEntry::Directory(dir) => dir,
                 _ => return Ok(None)
