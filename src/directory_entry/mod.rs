@@ -40,4 +40,13 @@ pub enum DirectoryEntry {
     File(ISOFile)
 }
 
+impl DirectoryEntry {
+    pub fn identifier(&self) -> &str {
+        match *self {
+            DirectoryEntry::Directory(ref dir) => &dir.identifier,
+            DirectoryEntry::File(ref file) => &file.identifier,
+        }
+    }
+}
+
 assert_eq_size!(directory_hdr_size_eq; DirectoryEntryHeader, [u8; 33]);

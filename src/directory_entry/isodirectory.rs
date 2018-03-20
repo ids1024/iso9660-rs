@@ -33,13 +33,16 @@ impl ISODirectory {
         }
     }
 
+    pub fn block_count(&self) -> u32 {
+        let len = self.header.extent_length.get();
+        (len + 2048 - 1) / 2048 // ceil(len / 2048)
+    }
+
     // TODO: Iterator? Perhaps using generator?
     pub fn contents(&self) -> ISODirectoryIterator {
-        let len = self.header.extent_length.get();
-
         ISODirectoryIterator {
             loc: self.header.extent_loc.get(),
-            block_count: (len + 2048 - 1) / 2048, // ceil(len / 2048)
+            block_count: self.block_count(),
             file: self.file.clone(),
             block: unsafe { mem::uninitialized() },
             block_num: 0,
@@ -54,17 +57,9 @@ impl ISODirectory {
 
     pub fn find(&self, identifier: &str) -> Result<Option<DirectoryEntry>> {
         for entry in self.contents() {
-            match entry? {
-                DirectoryEntry::Directory(dir) => {
-                    if dir.identifier.eq_ignore_ascii_case(identifier) {
-                        return Ok(Some(DirectoryEntry::Directory(dir)));
-                    }
-                }
-                DirectoryEntry::File(file) => {
-                    if file.identifier.eq_ignore_ascii_case(identifier) {
-                        return Ok(Some(DirectoryEntry::File(file)));
-                    }
-                }
+            let entry = entry?;
+            if entry.identifier().eq_ignore_ascii_case(identifier) {
+                return Ok(Some(entry));
             }
         }
 
