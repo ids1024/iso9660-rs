@@ -124,11 +124,10 @@ impl ISO9660 {
                 _ => return Ok(None)
             };
 
-            entry = match parent.find(segment).unwrap() {
+            entry = match parent.find(segment)? {
                 Some(entry) => entry,
                 None => return Ok(None)
             };
-
         }
 
         Ok(Some(entry))
