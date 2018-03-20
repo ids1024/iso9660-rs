@@ -9,8 +9,8 @@ fn test_dir() {
     let fs = ISO9660::new("test.iso").unwrap();
 
     let mut iter = fs.root.contents();
-    assert_eq!(iter.next().unwrap().unwrap().identifier(), "\u{0}"); 
-    assert_eq!(iter.next().unwrap().unwrap().identifier(), "\u{1}"); 
+    assert_eq!(iter.next().unwrap().unwrap().identifier(), "."); 
+    assert_eq!(iter.next().unwrap().unwrap().identifier(), ".."); 
     assert_eq!(iter.next().unwrap().unwrap().identifier(), "A"); 
     assert_eq!(iter.next().unwrap().unwrap().identifier(), "GPL_3_0.TXT"); 
     assert!(iter.next().is_none()); 

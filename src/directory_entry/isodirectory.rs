@@ -132,7 +132,13 @@ impl Iterator for ISODirectoryIterator {
         // 33 is the size of the header without padding
         let start = self.block_pos as usize + 33;
         let end = start + header.file_identifier_len as usize;
-        let file_identifier = try_some!(str::from_utf8(&self.block[start..end]));
+        let mut file_identifier = try_some!(str::from_utf8(&self.block[start..end]));
+
+        if file_identifier == "\u{0}" {
+            file_identifier = ".";
+        } else if file_identifier == "\u{1}" {
+            file_identifier = "..";
+        }
 
         // After the file identifier, ISO 9660 allows addition space for
         // system use. Ignore that for now.

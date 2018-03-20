@@ -41,7 +41,7 @@ fn print_tree(dir: &ISODirectory, level: u32) {
     for entry in dir.contents() {
         match entry.unwrap() {
             DirectoryEntry::Directory(dir) => {
-                if dir.identifier == "\0" || dir.identifier == "\u{1}" {
+                if dir.identifier == "." || dir.identifier == ".." {
                     continue;
                 }
                 for _i in 0..level {
