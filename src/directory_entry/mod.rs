@@ -11,7 +11,7 @@ bitflags! {
     pub struct FileFlags: u8 {
         const EXISTANCE = 1 << 0;
         const DIRECTORY = 1 << 1;
-        const ASSOCIATEDFILEF = 1 << 2;
+        const ASSOCIATEDFILE = 1 << 2;
         const RECORD = 1 << 3;
         const PROTECTION = 1 << 4;
         // Bits 5 and 6 are reserved; should be zero
@@ -41,6 +41,14 @@ pub enum DirectoryEntry {
 }
 
 impl DirectoryEntry {
+    pub(crate) fn header(&self) -> &DirectoryEntryHeader {
+        match *self {
+            DirectoryEntry::Directory(ref dir) => &dir.header,
+            DirectoryEntry::File(ref file) => &file.header,
+        }
+
+    }
+
     pub fn identifier(&self) -> &str {
         match *self {
             DirectoryEntry::Directory(ref dir) => &dir.identifier,

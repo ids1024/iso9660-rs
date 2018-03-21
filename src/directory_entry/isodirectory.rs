@@ -58,6 +58,9 @@ impl ISODirectory {
     pub fn find(&self, identifier: &str) -> Result<Option<DirectoryEntry>> {
         for entry in self.contents() {
             let entry = entry?;
+            if entry.header().file_flags.contains(FileFlags::ASSOCIATEDFILE) {
+                continue;
+            }
             if entry.identifier().eq_ignore_ascii_case(identifier) {
                 return Ok(Some(entry));
             }
