@@ -3,7 +3,7 @@ use std::{mem, str};
 use time::Tm;
 
 use ::{DirectoryEntry, ISOFile, FileRef, Result, ISOError};
-use super::{DirectoryEntryHeader, FileFlags, directory_entry};
+use ::parse::{DirectoryEntryHeader, FileFlags};
 
 // Like try!, but wrap in Some()
 macro_rules! try_some {
@@ -114,7 +114,7 @@ impl Iterator for ISODirectoryIterator {
          }
 
         // XXX unwrap
-        let (_, header) = directory_entry(&self.block[self.block_pos..]).unwrap();
+        let header = DirectoryEntryHeader::parse(&self.block[self.block_pos..]).unwrap();
         self.block_pos += header.length as usize;
 
         let mut file_identifier = header.identifier.as_str();

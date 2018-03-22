@@ -12,18 +12,17 @@ use std::path::Path;
 use std::mem;
 use std::result;
 
-use volume_descriptor::VolumeDescriptor;
-
-pub use directory_entry::{DirectoryEntry, ISODirectory, ISOFile, directory_entry};
+pub use directory_entry::{DirectoryEntry, ISODirectory, ISOFile};
 pub(crate) use fileref::FileRef;
 pub use error::ISOError;
+use parse::VolumeDescriptor;
 
 pub type Result<T> = result::Result<T, ISOError>;
 
-mod volume_descriptor;
 mod directory_entry;
 mod fileref;
 mod error;
+mod parse;
 
 pub struct ISO9660 {
     _file: FileRef,

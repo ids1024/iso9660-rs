@@ -1,8 +1,11 @@
 use nom::{le_u8, le_u32};
 use time::Tm;
-use std::str::{self, FromStr, Utf8Error};
-use directory_entry::{DirectoryEntryHeader, both_endian16, both_endian32, directory_entry};
+use std::str::{self, Utf8Error};
+
 use ::ISOError;
+use super::directory_entry::{DirectoryEntryHeader, directory_entry};
+use super::both_endian::{both_endian16, both_endian32};
+use super::date_time::date_time_ascii;
 
 pub(crate) enum VolumeDescriptor {
     Primary {
@@ -66,31 +69,6 @@ named!(boot_record<&[u8], VolumeDescriptor>, do_parse!(
         boot_system_identifier: identifier_to_string(boot_system_identifier).unwrap(),
         boot_identifier: identifier_to_string(boot_identifier).unwrap(),
         data: data.to_vec()
-    })
-));
-
-named!(date_time_ascii<&[u8], Tm>, do_parse!(
-    year:        take!(4) >>
-    month:       take!(2) >>
-    day:         take!(2) >>
-    hour:        take!(2) >>
-    minute:      take!(2) >>
-    second:      take!(2) >>
-    centisecond: take!(2) >>
-    gmt_offset:  le_u8    >>
-    (Tm {
-        // XXX unwrap
-        tm_year: i32::from_str(str::from_utf8(year).unwrap()).unwrap(),
-        tm_mon: i32::from_str(str::from_utf8(month).unwrap()).unwrap(),
-        tm_hour: i32::from_str(str::from_utf8(hour).unwrap()).unwrap(),
-        tm_min: i32::from_str(str::from_utf8(minute).unwrap()).unwrap(),
-        tm_sec: i32::from_str(str::from_utf8(second).unwrap()).unwrap(),
-        tm_mday: i32::from_str(str::from_utf8(day).unwrap()).unwrap(),
-        tm_wday: -1, // XXX
-        tm_yday: -1, // XXX
-        tm_nsec: 0,
-        tm_isdst: -1,
-        tm_utcoff: gmt_offset as i32,
     })
 ));
 
