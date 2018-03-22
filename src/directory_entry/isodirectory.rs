@@ -3,7 +3,7 @@ use std::{mem, str};
 use time::Tm;
 
 use ::{DirectoryEntry, ISOFile, FileRef, Result, ISOError};
-use super::{DirectoryEntryHeader, FileFlags};
+use super::{DirectoryEntryHeader, FileFlags, directory_entry};
 
 // Like try!, but wrap in Some()
 macro_rules! try_some {
@@ -34,14 +34,14 @@ impl ISODirectory {
     }
 
     pub fn block_count(&self) -> u32 {
-        let len = self.header.extent_length.get();
+        let len = self.header.extent_length;
         (len + 2048 - 1) / 2048 // ceil(len / 2048)
     }
 
     // TODO: Iterator? Perhaps using generator?
     pub fn contents(&self) -> ISODirectoryIterator {
         ISODirectoryIterator {
-            loc: self.header.extent_loc.get(),
+            loc: self.header.extent_loc,
             block_count: self.block_count(),
             file: self.file.clone(),
             block: unsafe { mem::uninitialized() },
@@ -52,7 +52,7 @@ impl ISODirectory {
     }
 
     pub fn time(&self) -> Tm {
-        self.header.time.to_tm()
+        self.header.time
     }
 
     pub fn find(&self, identifier: &str) -> Result<Option<DirectoryEntry>> {
@@ -76,7 +76,7 @@ pub struct ISODirectoryIterator {
     file: FileRef,
     block: [u8; 2048],
     block_num: u32,
-    block_pos: u32,
+    block_pos: usize,
     have_block: bool
 }
 
@@ -92,7 +92,7 @@ impl Iterator for ISODirectoryIterator {
         if !self.have_block ||
            self.block_pos >= (2048 - 33) ||
            // All bytes after the last directory entry are zero.
-           self.block[self.block_pos as usize] == 0 {
+           self.block[self.block_pos] == 0 {
 
             if self.have_block {
                 self.block_num += 1;
@@ -113,40 +113,17 @@ impl Iterator for ISODirectoryIterator {
             }
          }
 
-        let header = unsafe { &*(self.block[self.block_pos as usize..].as_ptr()
-                                 as *const DirectoryEntryHeader) };
+        // XXX unwrap
+        let (_, header) = directory_entry(&self.block[self.block_pos..]).unwrap();
+        self.block_pos += header.length as usize;
 
-        if header.length < 34 {
-            return Some(Err(ISOError::InvalidFs("length < 34")));
-        }
-
-        if header.length as u32 > 2048 - self.block_pos {
-            return Some(Err(ISOError::InvalidFs("length > left on block")));
-        }
-
-        if header.length % 2 != 0 {
-            return Some(Err(ISOError::InvalidFs("length % 2 != 0")));
-        }
-
-        if header.file_identifier_len > header.length {
-            return Some(Err(ISOError::InvalidFs("identifer_len > length")));
-        }
-
-        // 33 is the size of the header without padding
-        let start = self.block_pos as usize + 33;
-        let end = start + header.file_identifier_len as usize;
-        let mut file_identifier = try_some!(str::from_utf8(&self.block[start..end]));
+        let mut file_identifier = header.identifier.as_str();
 
         if file_identifier == "\u{0}" {
             file_identifier = ".";
         } else if file_identifier == "\u{1}" {
             file_identifier = "..";
         }
-
-        // After the file identifier, ISO 9660 allows addition space for
-        // system use. Ignore that for now.
-
-        self.block_pos += header.length as u32;
 
         let entry = if header.file_flags.contains(FileFlags::DIRECTORY) {
             DirectoryEntry::Directory(ISODirectory::new(

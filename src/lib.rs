@@ -1,12 +1,10 @@
-#![feature(untagged_unions)]
 #![feature(read_initializer)]
 
-#[macro_use]
-extern crate static_assertions;
 extern crate time;
-extern crate byteorder;
 #[macro_use]
 extern crate bitflags;
+#[macro_use]
+extern crate nom;
 
 use std::io::{SeekFrom, Read, Seek};
 use std::fs::File;
@@ -16,16 +14,14 @@ use std::result;
 
 use volume_descriptor::VolumeDescriptor;
 
-pub use directory_entry::{DirectoryEntry, ISODirectory, ISOFile};
+pub use directory_entry::{DirectoryEntry, ISODirectory, ISOFile, directory_entry};
 pub(crate) use fileref::FileRef;
 pub use error::ISOError;
 
 pub type Result<T> = result::Result<T, ISOError>;
 
-mod both_endian;
 mod volume_descriptor;
 mod directory_entry;
-mod datetime;
 mod fileref;
 mod error;
 
@@ -37,9 +33,7 @@ pub struct ISO9660 {
 impl ISO9660 {
     pub fn new<P: AsRef<Path>>(path: P) -> Result<ISO9660> {
         let mut file = File::open(&path)?;
-        // Using uninitialized is safe for reasons addressed in read_block.rs
-        // Using VolumeDescriptor with potentially arbirary data is safe
-        let mut desc: VolumeDescriptor = unsafe { mem::uninitialized() };
+        let mut buf: [u8; 2048] = unsafe { mem::uninitialized() };
         let mut root = None;
 
         // Skip the "system area"
@@ -47,46 +41,30 @@ impl ISO9660 {
 
         // Read volume descriptors
         loop {
-            {
-                let buf = unsafe {
-                    &mut *(&mut desc as *mut _ as *mut [u8; 2048])
-                };
+            let count = file.read(&mut buf)?;
 
-                let count = file.read(buf)?;
-
-                if count != 2048 {
-                    return Err(ISOError::ReadSize(2048, count));
-                }
+            if count != 2048 {
+                return Err(ISOError::ReadSize(2048, count));
             }
 
-            let header = unsafe { &desc.header };
-
-            if (&header.identifier, header.version) != (b"CD001", 1) {
-                return Err(ISOError::InvalidFs("'CD001' identifier missing"));
-            }
-
-            match header.type_code {
-                // Boot record
-                0 => {}
+            match VolumeDescriptor::parse(&buf)? {
                 // Primary volume descriptor
-                1 => {
-                    let primary = unsafe { &desc.primary };
-
-                    if primary.logical_block_size.get() != 2048 {
+                Some(VolumeDescriptor::Primary {
+                    logical_block_size,
+                    root_directory_entry,
+                    ..
+                }) => {
+                    if logical_block_size != 2048 {
                         // This is almost always the case, but technically
                         // not guaranteed by the standard.
                         // TODO: Implement this
                         return Err(ISOError::InvalidFs("Block size not 2048"));
                     }
 
-                    root = Some(primary.root_directory_entry.clone());
+                    root = Some(root_directory_entry);
+
                 },
-                // Supplementary volume descriptor
-                2 => {}
-                // Volume partition descriptor
-                3 => {}
-                // Volume descriptor set terminator
-                255 => break,
+                Some(VolumeDescriptor::VolumeDescriptorSetTerminator) => break,
                 _ => {}
             }
         }
