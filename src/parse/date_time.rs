@@ -1,5 +1,3 @@
-use std::str::{self, FromStr};
-
 use nom::le_u8;
 use time::Tm;
 
@@ -28,25 +26,24 @@ named!(pub date_time<&[u8], Tm>, do_parse!(
 ));
 
 named!(pub date_time_ascii<&[u8], Tm>, do_parse!(
-    year:        take!(4) >>
-    month:       take!(2) >>
-    day:         take!(2) >>
-    hour:        take!(2) >>
-    minute:      take!(2) >>
-    second:      take!(2) >>
-    centisecond: take!(2) >>
+    year:        flat_map!(take!(4), parse_to!(i32)) >>
+    month:       flat_map!(take!(2), parse_to!(i32)) >>
+    day:         flat_map!(take!(2), parse_to!(i32)) >>
+    hour:        flat_map!(take!(2), parse_to!(i32)) >>
+    minute:      flat_map!(take!(2), parse_to!(i32)) >>
+    second:      flat_map!(take!(2), parse_to!(i32)) >>
+    centisecond: flat_map!(take!(2), parse_to!(i32)) >>
     gmt_offset:  le_u8    >>
     (Tm {
-        // XXX unwrap
-        tm_year: i32::from_str(str::from_utf8(year).unwrap()).unwrap(),
-        tm_mon: i32::from_str(str::from_utf8(month).unwrap()).unwrap(),
-        tm_hour: i32::from_str(str::from_utf8(hour).unwrap()).unwrap(),
-        tm_min: i32::from_str(str::from_utf8(minute).unwrap()).unwrap(),
-        tm_sec: i32::from_str(str::from_utf8(second).unwrap()).unwrap(),
-        tm_mday: i32::from_str(str::from_utf8(day).unwrap()).unwrap(),
+        tm_year: year,
+        tm_mon: month,
+        tm_hour: hour,
+        tm_min: minute,
+        tm_sec: second,
+        tm_mday: day,
         tm_wday: -1, // XXX
         tm_yday: -1, // XXX
-        tm_nsec: i32::from_str(str::from_utf8(centisecond).unwrap()).unwrap() * 10_000_000,
+        tm_nsec: centisecond * 10_000_000,
         tm_isdst: -1,
         tm_utcoff: gmt_offset as i32,
     })

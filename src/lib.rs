@@ -78,11 +78,13 @@ impl ISO9660 {
             }
         };
 
+        let identifier = root.identifier.clone();
+
         Ok(ISO9660 {
             _file: file,
             root: ISODirectory::new(
                 root,
-                "\0".to_string(), // XXX actually read from disk
+                identifier,
                 file2
                 )
         })

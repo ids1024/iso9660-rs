@@ -3,6 +3,8 @@ use std::fmt::{self, Display};
 use std::num::ParseIntError;
 use std::{io, str};
 
+use nom;
+
 #[derive(Debug)]
 pub enum ISOError {
     Io(io::Error),
@@ -10,6 +12,7 @@ pub enum ISOError {
     InvalidFs(&'static str),
     ParseInt(ParseIntError),
     ReadSize(usize, usize),
+    Nom(nom::ErrorKind),
 }
 
 impl Display for ISOError {
@@ -22,6 +25,7 @@ impl Display for ISOError {
             ISOError::ReadSize(size, size_read) =>
                 write!(f, "Reading '{}' bytes block returned '{}' bytes",
                        size, size_read),
+            ISOError::Nom(ref err) => write!(f, "Parse error: {:?}", err),
         }
     }
 }
@@ -34,6 +38,7 @@ impl Error for ISOError {
             ISOError::InvalidFs(_) => "Not a valid ISO9660 filesystem",
             ISOError::ParseInt(ref err) => err.description(),
             ISOError::ReadSize(_, _) => "Read returned too few bytes",
+            ISOError::Nom(ref err) => err.description(),
         }
     }
 
@@ -62,5 +67,11 @@ impl From<str::Utf8Error> for ISOError {
 impl From<ParseIntError> for ISOError {
     fn from(err: ParseIntError) -> ISOError {
         ISOError::ParseInt(err)
+    }
+}
+
+impl<'a> From<nom::Err<&'a [u8]>> for ISOError {
+    fn from(err: nom::Err<&[u8]>) -> ISOError {
+        ISOError::Nom(err.into_error_kind())
     }
 }

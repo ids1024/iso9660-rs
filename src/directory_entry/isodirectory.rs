@@ -113,8 +113,7 @@ impl Iterator for ISODirectoryIterator {
             }
          }
 
-        // XXX unwrap
-        let header = DirectoryEntryHeader::parse(&self.block[self.block_pos..]).unwrap();
+        let header = try_some!(DirectoryEntryHeader::parse(&self.block[self.block_pos..]));
         self.block_pos += header.length as usize;
 
         let mut file_identifier = header.identifier.as_str();

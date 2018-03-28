@@ -2,7 +2,6 @@
 
 use nom::{le_u8, le_u32};
 use time::Tm;
-use std::str::{self, Utf8Error};
 
 use ::ISOError;
 use super::directory_entry::{DirectoryEntryHeader, directory_entry};
@@ -49,27 +48,17 @@ pub(crate) enum VolumeDescriptor {
 
 impl VolumeDescriptor {
     pub fn parse(bytes: &[u8]) -> Result<Option<VolumeDescriptor>, ISOError> {
-        // XXX unwrap
-        let (_, desc) = volume_descriptor(bytes).unwrap();
-        Ok(desc)
+        Ok(volume_descriptor(bytes)?.1)
     }
 }
 
-fn identifier_to_string(identifier: &[u8]) -> Result<String, Utf8Error> {
-    let end = identifier.iter().rposition(|x| *x != b' ')
-                               .map(|x| x + 1)
-                               .unwrap_or(0);
-    Ok(str::from_utf8(&identifier[..end])?.to_string())
-}
-
 named!(boot_record<&[u8], VolumeDescriptor>, do_parse!(
-    boot_system_identifier: take!(32)   >>
-    boot_identifier:        take!(32)   >>
-    data:                   take!(1977) >>
+    boot_system_identifier: take_str!(32) >>
+    boot_identifier:        take_str!(32) >>
+    data:                   take!(1977)   >>
     (VolumeDescriptor::BootRecord {
-        // XXX unwrap
-        boot_system_identifier: identifier_to_string(boot_system_identifier).unwrap(),
-        boot_identifier: identifier_to_string(boot_identifier).unwrap(),
+        boot_system_identifier: boot_system_identifier.trim_right().to_string(),
+        boot_identifier: boot_identifier.trim_right().to_string(),
         data: data.to_vec()
     })
 ));
@@ -92,8 +81,8 @@ named!(volume_descriptor<&[u8], Option<VolumeDescriptor>>, do_parse!(
 
 named!(primary_descriptor<&[u8], VolumeDescriptor>, do_parse!(
     take!(1) >> // padding
-    system_identifier: take!(32) >>
-    volume_identifier: take!(32) >>
+    system_identifier: take_str!(32) >>
+    volume_identifier: take_str!(32) >>
     take!(8) >> // padding
     volume_space_size: both_endian32 >>
     take!(32) >> // padding
@@ -109,13 +98,13 @@ named!(primary_descriptor<&[u8], VolumeDescriptor>, do_parse!(
 
     root_directory_entry: length_value!(value!(34), directory_entry) >>
 
-    volume_set_identifier: take!(128) >>
-    publisher_identifier: take!(128) >>
-    data_preparer_identifier: take!(128) >>
-    application_identifier: take!(128) >>
-    copyright_file_identifier: take!(38) >>
-    abstract_file_identifier: take!(36) >>
-    bibliographic_file_identifier: take!(37) >>
+    volume_set_identifier: take_str!(128) >>
+    publisher_identifier: take_str!(128) >>
+    data_preparer_identifier: take_str!(128) >>
+    application_identifier: take_str!(128) >>
+    copyright_file_identifier: take_str!(38) >>
+    abstract_file_identifier: take_str!(36) >>
+    bibliographic_file_identifier: take_str!(37) >>
 
     creation_time: date_time_ascii >>
     modification_time: date_time_ascii >>
@@ -125,9 +114,8 @@ named!(primary_descriptor<&[u8], VolumeDescriptor>, do_parse!(
     file_structure_version: le_u8 >>
 
     (VolumeDescriptor::Primary {
-        // XXX unwrap
-        system_identifier: identifier_to_string(system_identifier).unwrap(),
-        volume_identifier: identifier_to_string(volume_identifier).unwrap(),
+        system_identifier: system_identifier.trim_right().to_string(),
+        volume_identifier: volume_identifier.trim_right().to_string(),
         volume_space_size,
         volume_set_size,
         volume_sequence_number,
@@ -139,13 +127,13 @@ named!(primary_descriptor<&[u8], VolumeDescriptor>, do_parse!(
 
         root_directory_entry,
 
-        volume_set_identifier: identifier_to_string(volume_set_identifier).unwrap(),
-        publisher_identifier: identifier_to_string(publisher_identifier).unwrap(),
-        data_preparer_identifier: identifier_to_string(data_preparer_identifier).unwrap(),
-        application_identifier: identifier_to_string(application_identifier).unwrap(),
-        copyright_file_identifier: identifier_to_string(copyright_file_identifier).unwrap(),
-        abstract_file_identifier: identifier_to_string(abstract_file_identifier).unwrap(),
-        bibliographic_file_identifier: identifier_to_string(bibliographic_file_identifier).unwrap(),
+        volume_set_identifier: volume_set_identifier.trim_right().to_string(),
+        publisher_identifier: publisher_identifier.trim_right().to_string(),
+        data_preparer_identifier: data_preparer_identifier.trim_right().to_string(),
+        application_identifier: application_identifier.trim_right().to_string(),
+        copyright_file_identifier: copyright_file_identifier.trim_right().to_string(),
+        abstract_file_identifier: abstract_file_identifier.trim_right().to_string(),
+        bibliographic_file_identifier: bibliographic_file_identifier.trim_right().to_string(),
 
         creation_time,
         modification_time,

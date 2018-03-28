@@ -1,6 +1,5 @@
 use nom::le_u8;
 use time::Tm;
-use std::str;
 
 use ::Result;
 use super::both_endian::{both_endian16, both_endian32};
@@ -34,8 +33,7 @@ pub struct DirectoryEntryHeader {
 
 impl DirectoryEntryHeader {
     pub fn parse(input: &[u8]) -> Result<DirectoryEntryHeader> {
-        // XXX unwrap
-        Ok(directory_entry(input).unwrap().1)
+        Ok(directory_entry(input)?.1)
     }
 }
 
@@ -49,7 +47,7 @@ named!(pub directory_entry<&[u8], DirectoryEntryHeader>, do_parse!(
     file_unit_size:                   le_u8                >>
     interleave_gap_size:              le_u8                >>
     volume_sequence_number:           both_endian16        >>
-    identifier:                       length_bytes!(le_u8) >>
+    identifier:                       flat_map!(length_bytes!(le_u8), parse_to!(String)) >>
     // After the file identifier, ISO 9660 allows addition space for
     // system use. Ignore that for now.
 
@@ -63,7 +61,6 @@ named!(pub directory_entry<&[u8], DirectoryEntryHeader>, do_parse!(
         file_unit_size,
         interleave_gap_size,
         volume_sequence_number,
-        // XXX unwrap
-        identifier: str::from_utf8(identifier).unwrap().to_string(),
+        identifier,
     })
 ));
