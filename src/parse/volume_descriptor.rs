@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use nom::{le_u8, le_u32};
 use time::Tm;
 use std::str::{self, Utf8Error};
