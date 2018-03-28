@@ -47,7 +47,6 @@ impl ISO9660 {
             }
 
             match VolumeDescriptor::parse(&buf)? {
-                // Primary volume descriptor
                 Some(VolumeDescriptor::Primary {
                     logical_block_size,
                     root_directory_entry,
