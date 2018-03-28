@@ -8,6 +8,7 @@ use super::directory_entry::{DirectoryEntryHeader, directory_entry};
 use super::both_endian::{both_endian16, both_endian32};
 use super::date_time::date_time_ascii;
 
+#[derive(Clone, Debug)]
 pub(crate) enum VolumeDescriptor {
     Primary {
         system_identifier: String,
