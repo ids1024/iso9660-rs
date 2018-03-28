@@ -46,7 +46,7 @@ named!(pub date_time_ascii<&[u8], Tm>, do_parse!(
         tm_mday: i32::from_str(str::from_utf8(day).unwrap()).unwrap(),
         tm_wday: -1, // XXX
         tm_yday: -1, // XXX
-        tm_nsec: 0,
+        tm_nsec: i32::from_str(str::from_utf8(centisecond).unwrap()).unwrap() * 10_000_000,
         tm_isdst: -1,
         tm_utcoff: gmt_offset as i32,
     })
