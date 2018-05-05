@@ -33,22 +33,23 @@ impl fmt::Debug for ISOFile {
 }
 
 impl ISOFile {
-    pub(crate) fn new(header: DirectoryEntryHeader, identifier: &str, file: FileRef) -> Result<ISOFile> {
+    pub(crate) fn new(header: DirectoryEntryHeader, mut identifier: String, file: FileRef) -> Result<ISOFile> {
         // Files (not directories) in ISO 9660 have a version number, which is
         // provided at the end of the identifier, seperated by ';'
         let error = ISOError::InvalidFs("File indentifier missing ';'");
         let idx = identifier.rfind(';').ok_or(error)?;
 
-        let ver_str = &identifier[idx+1..];
-        let mut name = &identifier[..idx];
-        let version = u16::from_str(ver_str)?;
+        let version = u16::from_str(&identifier[idx+1..])?;
+        identifier.truncate(idx);
 
         // Files without an extension have a '.' at the end
-        name = name.trim_right_matches('.');
+        if identifier.chars().last() == Some('.') {
+            identifier.pop();
+        }
 
         Ok(ISOFile {
             header,
-            identifier: name.to_string(),
+            identifier,
             version,
             file,
             buf: unsafe { mem::uninitialized() },

@@ -23,6 +23,7 @@ pub(crate) enum VolumeDescriptor {
         optional_path_table_loc: u32,
 
         root_directory_entry: DirectoryEntryHeader,
+        root_directory_entry_identifier: String,
 
         volume_set_identifier: String,
         publisher_identifier: String,
@@ -126,7 +127,8 @@ named!(primary_descriptor<&[u8], VolumeDescriptor>, do_parse!(
         path_table_loc,
         optional_path_table_loc,
 
-        root_directory_entry,
+        root_directory_entry: root_directory_entry.0,
+        root_directory_entry_identifier: root_directory_entry.1,
 
         volume_set_identifier: volume_set_identifier.trim_right().to_string(),
         publisher_identifier: publisher_identifier.trim_right().to_string(),

@@ -25,7 +25,13 @@ pub struct ISODirectory {
 }
 
 impl ISODirectory {
-    pub(crate) fn new(header: DirectoryEntryHeader, identifier: String, file: FileRef) -> ISODirectory {
+    pub(crate) fn new(header: DirectoryEntryHeader, mut identifier: String, file: FileRef) -> ISODirectory {
+        if &identifier == "\u{0}" {
+            identifier = ".".to_string();
+        } else if &identifier == "\u{1}" {
+            identifier = "..".to_string();
+        }
+
         ISODirectory {
             header,
             identifier,
@@ -112,27 +118,20 @@ impl Iterator for ISODirectoryIterator {
             }
          }
 
-        let header = try_some!(DirectoryEntryHeader::parse(&self.block[self.block_pos..]));
+        let (header, identifier) = try_some!(
+            DirectoryEntryHeader::parse(&self.block[self.block_pos..]));
         self.block_pos += header.length as usize;
-
-        let mut file_identifier = header.identifier.as_str();
-
-        if file_identifier == "\u{0}" {
-            file_identifier = ".";
-        } else if file_identifier == "\u{1}" {
-            file_identifier = "..";
-        }
 
         let entry = if header.file_flags.contains(FileFlags::DIRECTORY) {
             DirectoryEntry::Directory(ISODirectory::new(
-                header.clone(),
-                file_identifier.to_string(),
+                header,
+                identifier,
                 self.file.clone()
             ))
         } else {
             DirectoryEntry::File(try_some!(ISOFile::new(
-                header.clone(),
-                file_identifier,
+                header,
+                identifier,
                 self.file.clone()
             )))
         };

@@ -50,6 +50,7 @@ impl ISO9660 {
                 Some(VolumeDescriptor::Primary {
                     logical_block_size,
                     root_directory_entry,
+                    root_directory_entry_identifier,
                     ..
                 }) => {
                     if logical_block_size != 2048 {
@@ -59,7 +60,7 @@ impl ISO9660 {
                         return Err(ISOError::InvalidFs("Block size not 2048"));
                     }
 
-                    root = Some(root_directory_entry);
+                    root = Some((root_directory_entry, root_directory_entry_identifier));
 
                 },
                 Some(VolumeDescriptor::VolumeDescriptorSetTerminator) => break,
@@ -77,13 +78,11 @@ impl ISO9660 {
             }
         };
 
-        let identifier = root.identifier.clone();
-
         Ok(ISO9660 {
             _file: file,
             root: ISODirectory::new(
-                root,
-                identifier,
+                root.0,
+                root.1,
                 file2
                 )
         })

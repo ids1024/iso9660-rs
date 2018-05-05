@@ -28,16 +28,15 @@ pub struct DirectoryEntryHeader {
     pub file_unit_size: u8,
     pub interleave_gap_size: u8,
     pub volume_sequence_number: u16,
-    pub identifier: String,
 }
 
 impl DirectoryEntryHeader {
-    pub fn parse(input: &[u8]) -> Result<DirectoryEntryHeader> {
+    pub fn parse(input: &[u8]) -> Result<(DirectoryEntryHeader, String)> {
         Ok(directory_entry(input)?.1)
     }
 }
 
-named!(pub directory_entry<&[u8], DirectoryEntryHeader>, do_parse!(
+named!(pub directory_entry<&[u8], (DirectoryEntryHeader, String)>, do_parse!(
     length:                           le_u8                >>
     extended_attribute_record_length: le_u8                >>
     extent_loc:                       both_endian32        >>
@@ -61,6 +60,5 @@ named!(pub directory_entry<&[u8], DirectoryEntryHeader>, do_parse!(
         file_unit_size,
         interleave_gap_size,
         volume_sequence_number,
-        identifier,
-    })
+    }, identifier)
 ));
