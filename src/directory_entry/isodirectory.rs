@@ -38,7 +38,6 @@ impl ISODirectory {
         (len + 2048 - 1) / 2048 // ceil(len / 2048)
     }
 
-    // TODO: Iterator? Perhaps using generator?
     pub fn contents(&self) -> ISODirectoryIterator {
         ISODirectoryIterator {
             loc: self.header.extent_loc,
