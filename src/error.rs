@@ -31,17 +31,6 @@ impl Display for ISOError {
 }
 
 impl Error for ISOError {
-    fn description(&self) -> &str {
-        match *self {
-            ISOError::Io(ref err) => err.description(),
-            ISOError::Utf8(ref err) => err.description(),
-            ISOError::InvalidFs(_) => "Not a valid ISO9660 filesystem",
-            ISOError::ParseInt(ref err) => err.description(),
-            ISOError::ReadSize(_, _) => "Read returned too few bytes",
-            ISOError::Nom(ref err) => err.description(),
-        }
-    }
-
     fn cause(&self) -> Option<&Error> {
         match *self {
             ISOError::Io(ref err) => Some(err),
