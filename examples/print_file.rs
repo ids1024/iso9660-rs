@@ -1,6 +1,7 @@
 extern crate iso9660;
 
 use std::io::{self, Write, Read};
+use std::fs::File;
 use std::{env, process};
 
 use iso9660::{ISO9660, DirectoryEntry};
@@ -16,7 +17,8 @@ fn main() {
     let iso_path = env::args().nth(1).unwrap();
     let file_path = env::args().nth(2).unwrap();
 
-    let fs = ISO9660::new(iso_path).unwrap();
+    let file = File::open(iso_path).unwrap();
+    let fs = ISO9660::new(file).unwrap();
 
     match fs.open(&file_path).unwrap() {
         Some(DirectoryEntry::File(mut file)) => {

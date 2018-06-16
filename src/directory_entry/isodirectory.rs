@@ -1,8 +1,8 @@
-use std::{mem, str};
+use std::{mem, str, fmt};
 
 use time::Tm;
 
-use ::{DirectoryEntry, ISOFile, FileRef, Result, ISOError};
+use ::{DirectoryEntry, ISOFile, FileRef, ISO9660Reader, Result, ISOError};
 use ::parse::{DirectoryEntryHeader, FileFlags};
 
 // Like try!, but wrap in Some()
@@ -17,15 +17,33 @@ macro_rules! try_some {
     };
 }
 
-#[derive(Clone, Debug)]
-pub struct ISODirectory {
+pub struct ISODirectory<T: ISO9660Reader> {
     pub(crate) header: DirectoryEntryHeader,
     pub identifier: String,
-    file: FileRef
+    file: FileRef<T>
 }
 
-impl ISODirectory {
-    pub(crate) fn new(header: DirectoryEntryHeader, mut identifier: String, file: FileRef) -> ISODirectory {
+impl<T: ISO9660Reader> Clone for ISODirectory<T> {
+    fn clone(&self) -> ISODirectory<T> {
+        ISODirectory {
+            header: self.header.clone(),
+            identifier: self.identifier.clone(),
+            file: self.file.clone()
+        }
+    }
+}
+
+impl<T: ISO9660Reader> fmt::Debug for ISODirectory<T> {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        fmt.debug_struct("ISOFile")
+           .field("header", &self.header)
+           .field("identifier", &self.identifier)
+           .finish()
+    }
+}
+
+impl<T: ISO9660Reader> ISODirectory<T> {
+    pub(crate) fn new(header: DirectoryEntryHeader, mut identifier: String, file: FileRef<T>) -> ISODirectory<T> {
         if &identifier == "\u{0}" {
             identifier = ".".to_string();
         } else if &identifier == "\u{1}" {
@@ -44,7 +62,7 @@ impl ISODirectory {
         (len + 2048 - 1) / 2048 // ceil(len / 2048)
     }
 
-    pub fn contents(&self) -> ISODirectoryIterator {
+    pub fn contents(&self) -> ISODirectoryIterator<T> {
         ISODirectoryIterator {
             loc: self.header.extent_loc,
             block_count: self.block_count(),
@@ -60,7 +78,7 @@ impl ISODirectory {
         self.header.time
     }
 
-    pub fn find(&self, identifier: &str) -> Result<Option<DirectoryEntry>> {
+    pub fn find(&self, identifier: &str) -> Result<Option<DirectoryEntry<T>>> {
         for entry in self.contents() {
             let entry = entry?;
             if entry.header().file_flags.contains(FileFlags::ASSOCIATEDFILE) {
@@ -75,20 +93,20 @@ impl ISODirectory {
     }
 }
 
-pub struct ISODirectoryIterator {
+pub struct ISODirectoryIterator<T: ISO9660Reader> {
     loc: u32,
     block_count: u32,
-    file: FileRef,
+    file: FileRef<T>,
     block: [u8; 2048],
     block_num: u32,
     block_pos: usize,
     have_block: bool
 }
 
-impl Iterator for ISODirectoryIterator {
-    type Item = Result<DirectoryEntry>;
+impl<T: ISO9660Reader> Iterator for ISODirectoryIterator<T> {
+    type Item = Result<DirectoryEntry<T>>;
 
-    fn next(&mut self) -> Option<Result<DirectoryEntry>> {
+    fn next(&mut self) -> Option<Result<DirectoryEntry<T>>> {
         if self.block_num == self.block_count {
             return None;
         }

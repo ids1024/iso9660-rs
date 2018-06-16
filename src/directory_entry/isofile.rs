@@ -7,33 +7,32 @@ use std::fmt;
 use time::Tm;
 
 use super::DirectoryEntryHeader;
-use ::{FileRef, Result, ISOError};
+use ::{FileRef, ISO9660Reader, Result, ISOError};
 
 #[derive(Clone)]
-pub struct ISOFile {
+pub struct ISOFile<T: ISO9660Reader> {
     pub(crate) header: DirectoryEntryHeader,
     pub identifier: String,
     // File version; ranges from 1 to 32767
     pub version: u16,
-    file: FileRef,
+    file: FileRef<T>,
     buf: [u8; 2048],
     buf_lba: Option<u64>,
     seek: u64
 }
 
-impl fmt::Debug for ISOFile {
+impl<T: ISO9660Reader> fmt::Debug for ISOFile<T> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.debug_struct("ISOFile")
            .field("header", &self.header)
            .field("version", &self.identifier)
-           .field("file", &self.file)
            .field("seek", &self.seek)
            .finish()
     }
 }
 
-impl ISOFile {
-    pub(crate) fn new(header: DirectoryEntryHeader, mut identifier: String, file: FileRef) -> Result<ISOFile> {
+impl<T: ISO9660Reader> ISOFile<T> {
+    pub(crate) fn new(header: DirectoryEntryHeader, mut identifier: String, file: FileRef<T>) -> Result<ISOFile<T>> {
         // Files (not directories) in ISO 9660 have a version number, which is
         // provided at the end of the identifier, seperated by ';'
         let error = ISOError::InvalidFs("File indentifier missing ';'");
@@ -67,7 +66,7 @@ impl ISOFile {
     }
 }
 
-impl Read for ISOFile {
+impl<T: ISO9660Reader> Read for ISOFile<T> {
     unsafe fn initializer(&self) -> Initializer {
         Initializer::nop()
     }
@@ -94,7 +93,7 @@ impl Read for ISOFile {
     }
 }
 
-impl Seek for ISOFile {
+impl<T: ISO9660Reader> Seek for ISOFile<T> {
     fn seek(&mut self, pos: SeekFrom) -> io::Result<u64> {
         let seek = match pos {
             SeekFrom::Start(pos) => pos as i64,

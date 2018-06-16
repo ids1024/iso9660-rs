@@ -2,11 +2,12 @@ extern crate iso9660;
 extern crate md5;
 
 use std::io::Read;
+use std::fs::File;
 use iso9660::{ISO9660, DirectoryEntry};
 
 #[test]
 fn test_dir() {
-    let fs = ISO9660::new("test.iso").unwrap();
+    let fs = ISO9660::new(File::open("test.iso").unwrap()).unwrap();
 
     let mut iter = fs.root.contents();
     assert_eq!(iter.next().unwrap().unwrap().identifier(), "."); 
@@ -18,7 +19,7 @@ fn test_dir() {
 
 #[test]
 fn test_large_file() {
-    let fs = ISO9660::new("test.iso").unwrap();
+    let fs = ISO9660::new(File::open("test.iso").unwrap()).unwrap();
 
     let mut file = match fs.open("gpl_3_0.txt").unwrap().unwrap() {
         DirectoryEntry::File(file) => file,
@@ -33,7 +34,7 @@ fn test_large_file() {
 
 #[test]
 fn test_extra_slashes() {
-    let fs = ISO9660::new("test.iso").unwrap();
+    let fs = ISO9660::new(File::open("test.iso").unwrap()).unwrap();
 
     assert!(fs.open("///a/b/c/1").unwrap().is_some());
     assert!(fs.open("a/b/c/1///").unwrap().is_some());
@@ -43,7 +44,7 @@ fn test_extra_slashes() {
 
 #[test]
 fn test_large_dir() {
-    let fs = ISO9660::new("test.iso").unwrap();
+    let fs = ISO9660::new(File::open("test.iso").unwrap()).unwrap();
 
     let dir = match fs.open("a/b/c").unwrap().unwrap() {
         DirectoryEntry::Directory(dir) => dir,

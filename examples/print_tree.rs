@@ -1,8 +1,9 @@
 extern crate iso9660;
 
 use std::{env, process};
+use std::fs::File;
 
-use iso9660::{ISO9660, ISODirectory, DirectoryEntry};
+use iso9660::{ISO9660, ISODirectory, DirectoryEntry, ISO9660Reader};
 
 fn main() {
     let args = env::args();
@@ -16,7 +17,8 @@ fn main() {
     let path = args.next().unwrap();
     let dirpath = args.next();
 
-    let fs = ISO9660::new(path).unwrap();
+    let file = File::open(path).unwrap();
+    let fs = ISO9660::new(file).unwrap();
 
     if let Some(dirpath) = dirpath {
         match fs.open(&dirpath).unwrap() {
@@ -37,7 +39,7 @@ fn main() {
     }
 }
 
-fn print_tree(dir: &ISODirectory, level: u32) {
+fn print_tree<T: ISO9660Reader>(dir: &ISODirectory<T>, level: u32) {
     for entry in dir.contents() {
         match entry.unwrap() {
             DirectoryEntry::Directory(dir) => {

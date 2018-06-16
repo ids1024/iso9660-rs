@@ -3,30 +3,43 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::io::Result;
 
-// TODO: Figure out if sane API possible without Rc/RefCell
-#[derive(Clone, Debug)]
-pub(crate) struct FileRef(Rc<RefCell<File>>);
-
-impl FileRef {
-    pub fn new(file: File) -> FileRef {
-        FileRef(Rc::new(RefCell::new(file)))
-    }
-
+pub trait ISO9660Reader {
     /// Read the block(s) at a given LBA (logical block address)
-    pub fn read_at(&self, buf: &mut [u8], lba: u64) -> Result<usize> {
-        #[allow(unused_mut)]
-        let mut file = (*self.0).borrow_mut();
+    fn read_at(&mut self, buf: &mut [u8], lba: u64) -> Result<usize>;
+}
 
+impl ISO9660Reader for File {
+    fn read_at(&mut self, buf: &mut [u8], lba: u64) -> Result<usize> {
         #[cfg(unix)]
         {
             use std::os::unix::fs::FileExt;
-            Ok(file.read_at(buf, lba * 2048)?)
+            Ok(FileExt::read_at(self, buf, lba * 2048)?)
         }
         #[cfg(not(unix))]
         {
             use std::io::{SeekFrom, Read, Seek};
-            file.seek(SeekFrom::Start(lba * 2048))?;
-            Ok(file.read(buf)?)
+            self.seek(SeekFrom::Start(lba * 2048))?;
+            Ok(self.read(buf)?)
         }
+    }
+}
+
+// TODO: Figure out if sane API possible without Rc/RefCell
+pub(crate) struct FileRef<T: ISO9660Reader>(Rc<RefCell<T>>);
+
+impl<T: ISO9660Reader> Clone for FileRef<T> {
+    fn clone(&self) -> FileRef<T> {
+        FileRef(self.0.clone())
+    }
+}
+
+impl<T: ISO9660Reader> FileRef<T> {
+    pub fn new(reader: T) -> FileRef<T> {
+        FileRef(Rc::new(RefCell::new(reader)))
+    }
+
+    /// Read the block(s) at a given LBA (logical block address)
+    pub fn read_at(&self, buf: &mut [u8], lba: u64) -> Result<usize> {
+        (*self.0).borrow_mut().read_at(buf, lba)
     }
 }

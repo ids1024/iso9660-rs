@@ -6,14 +6,12 @@ extern crate bitflags;
 #[macro_use]
 extern crate nom;
 
-use std::io::{SeekFrom, Read, Seek};
-use std::fs::File;
-use std::path::Path;
 use std::mem;
 use std::result;
 
 pub use directory_entry::{DirectoryEntry, ISODirectory, ISOFile};
 pub(crate) use fileref::FileRef;
+pub use fileref::ISO9660Reader;
 pub use error::ISOError;
 use parse::VolumeDescriptor;
 
@@ -24,23 +22,22 @@ mod fileref;
 mod error;
 mod parse;
 
-pub struct ISO9660 {
-    _file: FileRef,
-    pub root: ISODirectory
+pub struct ISO9660<T: ISO9660Reader> {
+    _file: FileRef<T>,
+    pub root: ISODirectory<T>
 }
 
-impl ISO9660 {
-    pub fn new<P: AsRef<Path>>(path: P) -> Result<ISO9660> {
-        let mut file = File::open(&path)?;
+impl<T: ISO9660Reader> ISO9660<T> {
+    pub fn new(mut reader: T) -> Result<ISO9660<T>> {
         let mut buf: [u8; 2048] = unsafe { mem::uninitialized() };
         let mut root = None;
 
         // Skip the "system area"
-        file.seek(SeekFrom::Start(16 * 2048))?;
+        let mut lba = 16;
 
         // Read volume descriptors
         loop {
-            let count = file.read(&mut buf)?;
+            let count = reader.read_at(&mut buf, lba)?;
 
             if count != 2048 {
                 return Err(ISOError::ReadSize(2048, count));
@@ -66,9 +63,11 @@ impl ISO9660 {
                 Some(VolumeDescriptor::VolumeDescriptorSetTerminator) => break,
                 _ => {}
             }
+
+            lba += 1;
         }
 
-        let file = FileRef::new(file);
+        let file = FileRef::new(reader);
         let file2 = file.clone();
 
         let root = match root {
@@ -88,7 +87,7 @@ impl ISO9660 {
         })
     }
 
-    pub fn open(&self, path: &str) -> Result<Option<DirectoryEntry>> {
+    pub fn open(&self, path: &str) -> Result<Option<DirectoryEntry<T>>> {
         // TODO: avoid clone()
         let mut entry = DirectoryEntry::Directory(self.root.clone());
         for segment in path.split('/').filter(|x| !x.is_empty()) {
