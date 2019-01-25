@@ -42,7 +42,7 @@ impl<T: ISO9660Reader> ISOFile<T> {
         identifier.truncate(idx);
 
         // Files without an extension have a '.' at the end
-        if identifier.chars().last() == Some('.') {
+        if identifier.ends_with('.') {
             identifier.pop();
         }
 
