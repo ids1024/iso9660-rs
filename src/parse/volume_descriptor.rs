@@ -59,8 +59,8 @@ named!(boot_record<&[u8], VolumeDescriptor>, do_parse!(
     boot_identifier:        take_str!(32) >>
     data:                   take!(1977)   >>
     (VolumeDescriptor::BootRecord {
-        boot_system_identifier: boot_system_identifier.trim_right().to_string(),
-        boot_identifier: boot_identifier.trim_right().to_string(),
+        boot_system_identifier: boot_system_identifier.trim_end().to_string(),
+        boot_identifier: boot_identifier.trim_end().to_string(),
         data: data.to_vec()
     })
 ));
@@ -116,8 +116,8 @@ named!(primary_descriptor<&[u8], VolumeDescriptor>, do_parse!(
     file_structure_version: le_u8 >>
 
     (VolumeDescriptor::Primary {
-        system_identifier: system_identifier.trim_right().to_string(),
-        volume_identifier: volume_identifier.trim_right().to_string(),
+        system_identifier: system_identifier.trim_end().to_string(),
+        volume_identifier: volume_identifier.trim_end().to_string(),
         volume_space_size,
         volume_set_size,
         volume_sequence_number,
@@ -130,13 +130,13 @@ named!(primary_descriptor<&[u8], VolumeDescriptor>, do_parse!(
         root_directory_entry: root_directory_entry.0,
         root_directory_entry_identifier: root_directory_entry.1,
 
-        volume_set_identifier: volume_set_identifier.trim_right().to_string(),
-        publisher_identifier: publisher_identifier.trim_right().to_string(),
-        data_preparer_identifier: data_preparer_identifier.trim_right().to_string(),
-        application_identifier: application_identifier.trim_right().to_string(),
-        copyright_file_identifier: copyright_file_identifier.trim_right().to_string(),
-        abstract_file_identifier: abstract_file_identifier.trim_right().to_string(),
-        bibliographic_file_identifier: bibliographic_file_identifier.trim_right().to_string(),
+        volume_set_identifier: volume_set_identifier.trim_end().to_string(),
+        publisher_identifier: publisher_identifier.trim_end().to_string(),
+        data_preparer_identifier: data_preparer_identifier.trim_end().to_string(),
+        application_identifier: application_identifier.trim_end().to_string(),
+        copyright_file_identifier: copyright_file_identifier.trim_end().to_string(),
+        abstract_file_identifier: abstract_file_identifier.trim_end().to_string(),
+        bibliographic_file_identifier: bibliographic_file_identifier.trim_end().to_string(),
 
         creation_time,
         modification_time,
