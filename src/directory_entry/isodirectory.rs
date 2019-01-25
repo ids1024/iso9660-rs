@@ -2,7 +2,7 @@ use std::{mem, str, fmt};
 
 use time::Tm;
 
-use crate::{DirectoryEntry, ISOFile, FileRef, ISO9660Reader, Result, ISOError};
+use crate::{DirectoryEntry, FileRef, ISO9660Reader, Result, ISOError};
 use crate::parse::{DirectoryEntryHeader, FileFlags};
 
 // Like try!, but wrap in Some()
@@ -140,20 +140,6 @@ impl<T: ISO9660Reader> Iterator for ISODirectoryIterator<T> {
             DirectoryEntryHeader::parse(&self.block[self.block_pos..]));
         self.block_pos += header.length as usize;
 
-        let entry = if header.file_flags.contains(FileFlags::DIRECTORY) {
-            DirectoryEntry::Directory(ISODirectory::new(
-                header,
-                identifier,
-                self.file.clone()
-            ))
-        } else {
-            DirectoryEntry::File(try_some!(ISOFile::new(
-                header,
-                identifier,
-                self.file.clone()
-            )))
-        };
-
-        Some(Ok(entry))
+        Some(DirectoryEntry::new(header, identifier, self.file.clone()))
     }
 }
