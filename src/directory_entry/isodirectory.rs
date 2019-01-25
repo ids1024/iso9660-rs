@@ -68,9 +68,8 @@ impl<T: ISO9660Reader> ISODirectory<T> {
             block_count: self.block_count(),
             file: self.file.clone(),
             block: unsafe { mem::uninitialized() },
-            block_num: 0,
+            block_num: None,
             block_pos: 0,
-            have_block: false
         }
     }
 
@@ -98,43 +97,36 @@ pub struct ISODirectoryIterator<T: ISO9660Reader> {
     block_count: u32,
     file: FileRef<T>,
     block: [u8; 2048],
-    block_num: u32,
+    block_num: Option<u32>,
     block_pos: usize,
-    have_block: bool
 }
 
 impl<T: ISO9660Reader> Iterator for ISODirectoryIterator<T> {
     type Item = Result<DirectoryEntry<T>>;
 
     fn next(&mut self) -> Option<Result<DirectoryEntry<T>>> {
-        if self.block_num == self.block_count {
-            return None;
-        }
-
         // If we have reached the end of one block, read another
-        if !self.have_block ||
+        if self.block_num.is_none() ||
            self.block_pos >= (2048 - 33) ||
            // All bytes after the last directory entry are zero.
            self.block[self.block_pos] == 0 {
 
-            if self.have_block {
-                self.block_num += 1;
-            }
-            self.block_pos = 0;
-            self.have_block = true;
-
-            if self.block_num == self.block_count {
+            let block_num = self.block_num.map(|x| x+1).unwrap_or(0);
+            if block_num == self.block_count {
                 return None;
             }
 
             let count = try_some!(self.file.read_at(
                     &mut self.block,
-                    self.loc as u64 + self.block_num as u64));
+                    self.loc as u64 + block_num as u64));
 
             if count != 2048 {
                 return Some(Err(ISOError::ReadSize(2048, count)));
             }
-         }
+
+            self.block_num = Some(block_num);
+            self.block_pos = 0;
+        }
 
         let (header, identifier) = try_some!(
             DirectoryEntryHeader::parse(&self.block[self.block_pos..]));
