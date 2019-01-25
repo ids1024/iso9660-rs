@@ -101,7 +101,7 @@ impl<T: ISO9660Reader> Read for ISOFileReader<T> {
 
         let bytes = seek - self.seek;
         self.seek = seek;
-        Ok(bytes as usize)
+        Ok(bytes)
     }
 }
 
