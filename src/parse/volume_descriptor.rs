@@ -3,7 +3,7 @@
 use nom::{le_u8, le_u32};
 use time::Tm;
 
-use ::ISOError;
+use crate::ISOError;
 use super::directory_entry::{DirectoryEntryHeader, directory_entry};
 use super::both_endian::{both_endian16, both_endian32};
 use super::date_time::date_time_ascii;

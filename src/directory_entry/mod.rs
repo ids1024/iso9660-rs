@@ -1,8 +1,8 @@
 pub use self::isodirectory::ISODirectory;
 pub use self::isofile::ISOFile;
 
-use ::parse::DirectoryEntryHeader;
-use ::ISO9660Reader;
+use crate::parse::DirectoryEntryHeader;
+use crate::ISO9660Reader;
 
 mod isodirectory;
 mod isofile;

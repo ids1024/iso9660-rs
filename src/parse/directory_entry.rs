@@ -1,7 +1,7 @@
 use nom::le_u8;
 use time::Tm;
 
-use ::Result;
+use crate::Result;
 use super::both_endian::{both_endian16, both_endian32};
 use super::date_time::date_time;
 

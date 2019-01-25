@@ -2,8 +2,8 @@ use std::{mem, str, fmt};
 
 use time::Tm;
 
-use ::{DirectoryEntry, ISOFile, FileRef, ISO9660Reader, Result, ISOError};
-use ::parse::{DirectoryEntryHeader, FileFlags};
+use crate::{DirectoryEntry, ISOFile, FileRef, ISO9660Reader, Result, ISOError};
+use crate::parse::{DirectoryEntryHeader, FileFlags};
 
 // Like try!, but wrap in Some()
 macro_rules! try_some {

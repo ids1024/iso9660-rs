@@ -7,7 +7,7 @@ use std::fmt;
 use time::Tm;
 
 use super::DirectoryEntryHeader;
-use ::{FileRef, ISO9660Reader, Result, ISOError};
+use crate::{FileRef, ISO9660Reader, Result, ISOError};
 
 #[derive(Clone)]
 pub struct ISOFile<T: ISO9660Reader> {
