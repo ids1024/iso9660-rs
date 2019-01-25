@@ -21,10 +21,10 @@ fn main() {
     let fs = ISO9660::new(file).unwrap();
 
     match fs.open(&file_path).unwrap() {
-        Some(DirectoryEntry::File(mut file)) => {
+        Some(DirectoryEntry::File(file)) => {
             let mut stdout = io::stdout();
             let mut text = Vec::new();
-            file.read_to_end(&mut text).unwrap();
+            file.read().read_to_end(&mut text).unwrap();
             stdout.write_all(&text).unwrap();
         }
         Some(_) => panic!("{} is not a file.", file_path),
