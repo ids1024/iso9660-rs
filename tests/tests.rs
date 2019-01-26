@@ -21,13 +21,13 @@ fn test_dir() {
 fn test_large_file() {
     let fs = ISO9660::new(File::open("test.iso").unwrap()).unwrap();
 
-    let mut file = match fs.open("gpl_3_0.txt").unwrap().unwrap() {
+    let file = match fs.open("gpl_3_0.txt").unwrap().unwrap() {
         DirectoryEntry::File(file) => file,
         _ => panic!("Not a file"),
     };
 
     let mut text = String::new();
-    file.read_to_string(&mut text).unwrap();
+    file.read().read_to_string(&mut text).unwrap();
     let hash = md5::compute(text);
     assert_eq!(format!("{:x}", hash), "1ebbd3e34237af26da5dc08a4e440464");
 }
