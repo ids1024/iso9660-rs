@@ -5,18 +5,6 @@ use time::Tm;
 use crate::{DirectoryEntry, FileRef, ISO9660Reader, Result, ISOError};
 use crate::parse::{DirectoryEntryHeader, FileFlags};
 
-// Like try!, but wrap in Some()
-macro_rules! try_some {
-    ( $res:expr ) => {
-        match $res {
-            Ok(val) => val,
-            Err(err) => {
-                return Some(Err(err.into()));
-            }
-        }
-    };
-}
-
 pub struct ISODirectory<T: ISO9660Reader> {
     pub(crate) header: DirectoryEntryHeader,
     pub identifier: String,
@@ -62,14 +50,49 @@ impl<T: ISO9660Reader> ISODirectory<T> {
         (len + 2048 - 1) / 2048 // ceil(len / 2048)
     }
 
+    pub fn read_entry_at(&self, block: &mut [u8; 2048], buf_block_num: &mut Option<u64>, offset: u64) -> Result<(DirectoryEntry<T>, Option<u64>)> {
+        let mut block_num = offset / 2048;
+        let mut block_pos = (offset % 2048) as usize;
+
+        if buf_block_num != &Some(block_num) {
+            let lba = self.header.extent_loc as u64 + block_num;
+            let count = self.file.read_at(block, lba)?;
+
+            if count != 2048 {
+                *buf_block_num = None;
+                return Err(ISOError::ReadSize(2048, count));
+            }
+
+            *buf_block_num = Some(block_num);
+        }
+
+        let (header, identifier) = DirectoryEntryHeader::parse(
+            &block[block_pos..])?;
+        block_pos += header.length as usize;
+
+        let entry = DirectoryEntry::new(header, identifier, self.file.clone())?;
+
+        // All bytes after the last directory entry are zero.
+        if block_pos >= (2048 - 33) || block[block_pos] == 0 {
+            block_num += 1;
+            block_pos = 0;
+        }
+
+        let next_offset = if block_num < self.block_count() as u64 {
+            Some(2048 * block_num + block_pos as u64)
+        } else {
+            None
+        };
+
+        Ok((entry, next_offset))
+    }
+
     pub fn contents(&self) -> ISODirectoryIterator<T> {
         ISODirectoryIterator {
-            loc: self.header.extent_loc,
-            block_count: self.block_count(),
-            file: self.file.clone(),
+            directory: self,
             block: unsafe { mem::uninitialized() },
             block_num: None,
-            block_pos: 0,
+            next_offset: Some(0)
         }
     }
 
@@ -92,46 +115,25 @@ impl<T: ISO9660Reader> ISODirectory<T> {
     }
 }
 
-pub struct ISODirectoryIterator<T: ISO9660Reader> {
-    loc: u32,
-    block_count: u32,
-    file: FileRef<T>,
+pub struct ISODirectoryIterator<'a, T: ISO9660Reader> {
+    directory: &'a ISODirectory<T>,
+    next_offset: Option<u64>,
     block: [u8; 2048],
-    block_num: Option<u32>,
-    block_pos: usize,
+    block_num: Option<u64>
 }
 
-impl<T: ISO9660Reader> Iterator for ISODirectoryIterator<T> {
+impl<'a, T: ISO9660Reader> Iterator for ISODirectoryIterator<'a, T> {
     type Item = Result<DirectoryEntry<T>>;
 
     fn next(&mut self) -> Option<Result<DirectoryEntry<T>>> {
-        // If we have reached the end of one block, read another
-        if self.block_num.is_none() ||
-           self.block_pos >= (2048 - 33) ||
-           // All bytes after the last directory entry are zero.
-           self.block[self.block_pos] == 0 {
-
-            let block_num = self.block_num.map(|x| x+1).unwrap_or(0);
-            if block_num == self.block_count {
-                return None;
+        let offset = self.next_offset?;
+        match self.directory.read_entry_at(&mut self.block,
+                                           &mut self.block_num, offset) {
+            Ok((entry, next_offset)) => {
+                self.next_offset = next_offset;
+                Some(Ok(entry))
             }
-
-            let count = try_some!(self.file.read_at(
-                    &mut self.block,
-                    self.loc as u64 + block_num as u64));
-
-            if count != 2048 {
-                return Some(Err(ISOError::ReadSize(2048, count)));
-            }
-
-            self.block_num = Some(block_num);
-            self.block_pos = 0;
+            Err(err) => Some(Err(err))
         }
-
-        let (header, identifier) = try_some!(
-            DirectoryEntryHeader::parse(&self.block[self.block_pos..]));
-        self.block_pos += header.length as usize;
-
-        Some(DirectoryEntry::new(header, identifier, self.file.clone()))
     }
 }
