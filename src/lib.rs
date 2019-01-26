@@ -9,7 +9,9 @@ extern crate nom;
 use std::mem;
 use std::result;
 
-pub use directory_entry::{DirectoryEntry, ISODirectory, ISOFile};
+pub use directory_entry::{
+    DirectoryEntry, ISODirectory, ISODirectoryIterator, ISOFile, ISOFileReader,
+};
 pub use error::ISOError;
 pub(crate) use fileref::FileRef;
 pub use fileref::ISO9660Reader;

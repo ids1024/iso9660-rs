@@ -1,5 +1,5 @@
-pub use self::isodirectory::ISODirectory;
-pub use self::isofile::ISOFile;
+pub use self::isodirectory::{ISODirectory, ISODirectoryIterator};
+pub use self::isofile::{ISOFile, ISOFileReader};
 
 use crate::parse::{DirectoryEntryHeader, FileFlags};
 use crate::{FileRef, ISO9660Reader, Result};
@@ -30,7 +30,7 @@ impl<T: ISO9660Reader> DirectoryEntry<T> {
         }
     }
 
-    pub(crate) fn header(&self) -> &DirectoryEntryHeader {
+    pub fn header(&self) -> &DirectoryEntryHeader {
         match *self {
             DirectoryEntry::Directory(ref dir) => &dir.header,
             DirectoryEntry::File(ref file) => &file.header,
