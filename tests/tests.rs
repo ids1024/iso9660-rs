@@ -1,20 +1,20 @@
 extern crate iso9660;
 extern crate md5;
 
-use std::io::Read;
+use iso9660::{DirectoryEntry, ISO9660};
 use std::fs::File;
-use iso9660::{ISO9660, DirectoryEntry};
+use std::io::Read;
 
 #[test]
 fn test_dir() {
     let fs = ISO9660::new(File::open("test.iso").unwrap()).unwrap();
 
     let mut iter = fs.root.contents();
-    assert_eq!(iter.next().unwrap().unwrap().identifier(), "."); 
-    assert_eq!(iter.next().unwrap().unwrap().identifier(), ".."); 
-    assert_eq!(iter.next().unwrap().unwrap().identifier(), "A"); 
-    assert_eq!(iter.next().unwrap().unwrap().identifier(), "GPL_3_0.TXT"); 
-    assert!(iter.next().is_none()); 
+    assert_eq!(iter.next().unwrap().unwrap().identifier(), ".");
+    assert_eq!(iter.next().unwrap().unwrap().identifier(), "..");
+    assert_eq!(iter.next().unwrap().unwrap().identifier(), "A");
+    assert_eq!(iter.next().unwrap().unwrap().identifier(), "GPL_3_0.TXT");
+    assert!(iter.next().is_none());
 }
 
 #[test]
@@ -23,7 +23,7 @@ fn test_large_file() {
 
     let mut file = match fs.open("gpl_3_0.txt").unwrap().unwrap() {
         DirectoryEntry::File(file) => file,
-        _ => panic!("Not a file")
+        _ => panic!("Not a file"),
     };
 
     let mut text = String::new();
@@ -48,7 +48,7 @@ fn test_large_dir() {
 
     let dir = match fs.open("a/b/c").unwrap().unwrap() {
         DirectoryEntry::Directory(dir) => dir,
-        _ => panic!("Not a directory")
+        _ => panic!("Not a directory"),
     };
 
     // 200 files, plus '.' and '..'

@@ -1,7 +1,7 @@
-use std::fs::File;
 use std::cell::RefCell;
-use std::rc::Rc;
+use std::fs::File;
 use std::io::Result;
+use std::rc::Rc;
 
 pub trait ISO9660Reader {
     /// Read the block(s) at a given LBA (logical block address)
@@ -28,7 +28,7 @@ impl ISO9660Reader for File {
         }
         #[cfg(not(unix))]
         {
-            use std::io::{SeekFrom, Read, Seek};
+            use std::io::{Read, Seek, SeekFrom};
             self.seek(SeekFrom::Start(lba * 2048))?;
             Ok(self.read(buf)?)
         }

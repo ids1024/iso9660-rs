@@ -1,9 +1,9 @@
 extern crate iso9660;
 
-use std::{env, process};
 use std::fs::File;
+use std::{env, process};
 
-use iso9660::{ISO9660, ISODirectory, DirectoryEntry, ISO9660Reader};
+use iso9660::{DirectoryEntry, ISO9660Reader, ISODirectory, ISO9660};
 
 fn main() {
     let args = env::args();
@@ -50,8 +50,8 @@ fn print_tree<T: ISO9660Reader>(dir: &ISODirectory<T>, level: u32) {
                     print!("  ");
                 }
                 println!("- {}/", dir.identifier);
-                print_tree(&dir, level+1);
-            },
+                print_tree(&dir, level + 1);
+            }
             DirectoryEntry::File(file) => {
                 for _i in 0..level {
                     print!("  ");

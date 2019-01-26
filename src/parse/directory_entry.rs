@@ -1,9 +1,9 @@
 use nom::le_u8;
 use time::Tm;
 
-use crate::Result;
 use super::both_endian::{both_endian16, both_endian32};
 use super::date_time::date_time;
+use crate::Result;
 
 bitflags! {
     pub struct FileFlags: u8 {

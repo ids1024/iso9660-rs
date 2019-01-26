@@ -22,9 +22,11 @@ impl Display for ISOError {
             ISOError::Utf8(ref err) => write!(f, "UTF8 error: {}", err),
             ISOError::InvalidFs(msg) => write!(f, "Invalid ISO9660: {}", msg),
             ISOError::ParseInt(ref err) => write!(f, "Int parse error: {}", err),
-            ISOError::ReadSize(size, size_read) =>
-                write!(f, "Reading '{}' bytes block returned '{}' bytes",
-                       size, size_read),
+            ISOError::ReadSize(size, size_read) => write!(
+                f,
+                "Reading '{}' bytes block returned '{}' bytes",
+                size, size_read
+            ),
             ISOError::Nom(ref err) => write!(f, "Parse error: {:?}", err),
         }
     }

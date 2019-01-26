@@ -10,21 +10,21 @@ use std::mem;
 use std::result;
 
 pub use directory_entry::{DirectoryEntry, ISODirectory, ISOFile};
+pub use error::ISOError;
 pub(crate) use fileref::FileRef;
 pub use fileref::ISO9660Reader;
-pub use error::ISOError;
 use parse::VolumeDescriptor;
 
 pub type Result<T> = result::Result<T, ISOError>;
 
 mod directory_entry;
-mod fileref;
 mod error;
+mod fileref;
 mod parse;
 
 pub struct ISO9660<T: ISO9660Reader> {
     _file: FileRef<T>,
-    pub root: ISODirectory<T>
+    pub root: ISODirectory<T>,
 }
 
 impl<T: ISO9660Reader> ISO9660<T> {
@@ -58,8 +58,7 @@ impl<T: ISO9660Reader> ISO9660<T> {
                     }
 
                     root = Some((root_directory_entry, root_directory_entry_identifier));
-
-                },
+                }
                 Some(VolumeDescriptor::VolumeDescriptorSetTerminator) => break,
                 _ => {}
             }
@@ -79,11 +78,7 @@ impl<T: ISO9660Reader> ISO9660<T> {
 
         Ok(ISO9660 {
             _file: file,
-            root: ISODirectory::new(
-                root.0,
-                root.1,
-                file2
-                )
+            root: ISODirectory::new(root.0, root.1, file2),
         })
     }
 
@@ -93,12 +88,12 @@ impl<T: ISO9660Reader> ISO9660<T> {
         for segment in path.split('/').filter(|x| !x.is_empty()) {
             let parent = match entry {
                 DirectoryEntry::Directory(dir) => dir,
-                _ => return Ok(None)
+                _ => return Ok(None),
             };
 
             entry = match parent.find(segment)? {
                 Some(entry) => entry,
-                None => return Ok(None)
+                None => return Ok(None),
             };
         }
 

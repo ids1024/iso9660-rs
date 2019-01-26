@@ -1,14 +1,14 @@
-use std::{mem, str, fmt};
+use std::{fmt, mem, str};
 
 use time::Tm;
 
-use crate::{DirectoryEntry, FileRef, ISO9660Reader, Result, ISOError};
 use crate::parse::{DirectoryEntryHeader, FileFlags};
+use crate::{DirectoryEntry, FileRef, ISO9660Reader, ISOError, Result};
 
 pub struct ISODirectory<T: ISO9660Reader> {
     pub(crate) header: DirectoryEntryHeader,
     pub identifier: String,
-    file: FileRef<T>
+    file: FileRef<T>,
 }
 
 impl<T: ISO9660Reader> Clone for ISODirectory<T> {
@@ -16,7 +16,7 @@ impl<T: ISO9660Reader> Clone for ISODirectory<T> {
         ISODirectory {
             header: self.header.clone(),
             identifier: self.identifier.clone(),
-            file: self.file.clone()
+            file: self.file.clone(),
         }
     }
 }
@@ -24,14 +24,18 @@ impl<T: ISO9660Reader> Clone for ISODirectory<T> {
 impl<T: ISO9660Reader> fmt::Debug for ISODirectory<T> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.debug_struct("ISOFile")
-           .field("header", &self.header)
-           .field("identifier", &self.identifier)
-           .finish()
+            .field("header", &self.header)
+            .field("identifier", &self.identifier)
+            .finish()
     }
 }
 
 impl<T: ISO9660Reader> ISODirectory<T> {
-    pub(crate) fn new(header: DirectoryEntryHeader, mut identifier: String, file: FileRef<T>) -> ISODirectory<T> {
+    pub(crate) fn new(
+        header: DirectoryEntryHeader,
+        mut identifier: String,
+        file: FileRef<T>,
+    ) -> ISODirectory<T> {
         if &identifier == "\u{0}" {
             identifier = ".".to_string();
         } else if &identifier == "\u{1}" {
@@ -41,7 +45,7 @@ impl<T: ISO9660Reader> ISODirectory<T> {
         ISODirectory {
             header,
             identifier,
-            file
+            file,
         }
     }
 
@@ -50,7 +54,12 @@ impl<T: ISO9660Reader> ISODirectory<T> {
         (len + 2048 - 1) / 2048 // ceil(len / 2048)
     }
 
-    pub fn read_entry_at(&self, block: &mut [u8; 2048], buf_block_num: &mut Option<u64>, offset: u64) -> Result<(DirectoryEntry<T>, Option<u64>)> {
+    pub fn read_entry_at(
+        &self,
+        block: &mut [u8; 2048],
+        buf_block_num: &mut Option<u64>,
+        offset: u64,
+    ) -> Result<(DirectoryEntry<T>, Option<u64>)> {
         let mut block_num = offset / 2048;
         let mut block_pos = (offset % 2048) as usize;
 
@@ -66,8 +75,7 @@ impl<T: ISO9660Reader> ISODirectory<T> {
             *buf_block_num = Some(block_num);
         }
 
-        let (header, identifier) = DirectoryEntryHeader::parse(
-            &block[block_pos..])?;
+        let (header, identifier) = DirectoryEntryHeader::parse(&block[block_pos..])?;
         block_pos += header.length as usize;
 
         let entry = DirectoryEntry::new(header, identifier, self.file.clone())?;
@@ -92,7 +100,7 @@ impl<T: ISO9660Reader> ISODirectory<T> {
             directory: self,
             block: unsafe { mem::uninitialized() },
             block_num: None,
-            next_offset: Some(0)
+            next_offset: Some(0),
         }
     }
 
@@ -103,7 +111,11 @@ impl<T: ISO9660Reader> ISODirectory<T> {
     pub fn find(&self, identifier: &str) -> Result<Option<DirectoryEntry<T>>> {
         for entry in self.contents() {
             let entry = entry?;
-            if entry.header().file_flags.contains(FileFlags::ASSOCIATEDFILE) {
+            if entry
+                .header()
+                .file_flags
+                .contains(FileFlags::ASSOCIATEDFILE)
+            {
                 continue;
             }
             if entry.identifier().eq_ignore_ascii_case(identifier) {
@@ -119,7 +131,7 @@ pub struct ISODirectoryIterator<'a, T: ISO9660Reader> {
     directory: &'a ISODirectory<T>,
     next_offset: Option<u64>,
     block: [u8; 2048],
-    block_num: Option<u64>
+    block_num: Option<u64>,
 }
 
 impl<'a, T: ISO9660Reader> Iterator for ISODirectoryIterator<'a, T> {
@@ -127,13 +139,15 @@ impl<'a, T: ISO9660Reader> Iterator for ISODirectoryIterator<'a, T> {
 
     fn next(&mut self) -> Option<Result<DirectoryEntry<T>>> {
         let offset = self.next_offset?;
-        match self.directory.read_entry_at(&mut self.block,
-                                           &mut self.block_num, offset) {
+        match self
+            .directory
+            .read_entry_at(&mut self.block, &mut self.block_num, offset)
+        {
             Ok((entry, next_offset)) => {
                 self.next_offset = next_offset;
                 Some(Ok(entry))
             }
-            Err(err) => Some(Err(err))
+            Err(err) => Some(Err(err)),
         }
     }
 }

@@ -17,5 +17,3 @@ named!(pub both_endian32<&[u8], u32>, do_parse!(
          take!(4) >>
     (val)
 ));
-
-

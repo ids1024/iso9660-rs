@@ -1,12 +1,12 @@
 #![allow(dead_code)]
 
-use nom::{le_u8, le_u32};
+use nom::{le_u32, le_u8};
 use time::Tm;
 
-use crate::ISOError;
-use super::directory_entry::{DirectoryEntryHeader, directory_entry};
 use super::both_endian::{both_endian16, both_endian32};
 use super::date_time::date_time_ascii;
+use super::directory_entry::{directory_entry, DirectoryEntryHeader};
+use crate::ISOError;
 
 #[derive(Clone, Debug)]
 pub(crate) enum VolumeDescriptor {
@@ -43,9 +43,9 @@ pub(crate) enum VolumeDescriptor {
     BootRecord {
         boot_system_identifier: String,
         boot_identifier: String,
-        data: Vec<u8> 
+        data: Vec<u8>,
     },
-    VolumeDescriptorSetTerminator
+    VolumeDescriptorSetTerminator,
 }
 
 impl VolumeDescriptor {

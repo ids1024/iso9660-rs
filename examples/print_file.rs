@@ -1,10 +1,10 @@
 extern crate iso9660;
 
-use std::io::{self, Write, Read};
 use std::fs::File;
+use std::io::{self, Read, Write};
 use std::{env, process};
 
-use iso9660::{ISO9660, DirectoryEntry};
+use iso9660::{DirectoryEntry, ISO9660};
 
 fn main() {
     let args = env::args();
@@ -28,6 +28,6 @@ fn main() {
             stdout.write_all(&text).unwrap();
         }
         Some(_) => panic!("{} is not a file.", file_path),
-        None => panic!("'{}' not found", file_path)
+        None => panic!("'{}' not found", file_path),
     }
 }
