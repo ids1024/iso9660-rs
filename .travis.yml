@@ -2,4 +2,4 @@ language: rust
 rust: nightly
 cache: cargo
 before_install:
-  - sudo apt-get install -y fuse-dev
+  - sudo apt-get install -y libfuse-dev
