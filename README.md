@@ -1,6 +1,8 @@
 iso9660-rs
 ==========
 
+[![Build Status](https://travis-ci.org/ids1024/iso9660-rs.svg?branch=master)](https://travis-ci.org/ids1024/iso9660-rs)
+
 Work in progress iso filesystem implementation in Rust.
 
 Sources
