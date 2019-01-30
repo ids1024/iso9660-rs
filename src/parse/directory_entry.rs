@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: (MIT OR Apache-2.0)
+
 use nom::le_u8;
 use time::Tm;
 

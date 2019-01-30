@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: (MIT OR Apache-2.0)
+
 use std::cmp::min;
 use std::fmt;
 use std::io::{self, Initializer, Read, Seek, SeekFrom, Write};

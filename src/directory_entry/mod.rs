@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: (MIT OR Apache-2.0)
+
 pub use self::isodirectory::{ISODirectory, ISODirectoryIterator};
 pub use self::isofile::{ISOFile, ISOFileReader};
 

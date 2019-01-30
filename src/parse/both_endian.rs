@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: (MIT OR Apache-2.0)
+
 use nom::{le_u16, le_u32};
 
 // ISO 9660 uses a representation for integers with both little

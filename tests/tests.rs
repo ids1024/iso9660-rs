@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: (MIT OR Apache-2.0)
+
 extern crate iso9660;
 extern crate md5;
 
