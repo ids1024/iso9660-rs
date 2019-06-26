@@ -81,10 +81,13 @@ fn volume_descriptor(i: &[u8]) -> IResult<&[u8], Option<VolumeDescriptor>> {
     }
 }
 
+named_args!(take_string_trim(n: usize)<String>,
+    map!(map!(take_str!(n), str::trim_end), str::to_string)
+);
 named!(primary_descriptor<VolumeDescriptor>, do_parse!(
     take!(1) >> // padding
-    system_identifier: take_str!(32) >>
-    volume_identifier: take_str!(32) >>
+    system_identifier: call!(take_string_trim, 32) >>
+    volume_identifier: call!(take_string_trim, 32) >>
     take!(8) >> // padding
     volume_space_size: both_endian32 >>
     take!(32) >> // padding
@@ -100,13 +103,13 @@ named!(primary_descriptor<VolumeDescriptor>, do_parse!(
 
     root_directory_entry: directory_entry >>
 
-    volume_set_identifier: take_str!(128) >>
-    publisher_identifier: take_str!(128) >>
-    data_preparer_identifier: take_str!(128) >>
-    application_identifier: take_str!(128) >>
-    copyright_file_identifier: take_str!(38) >>
-    abstract_file_identifier: take_str!(36) >>
-    bibliographic_file_identifier: take_str!(37) >>
+    volume_set_identifier: call!(take_string_trim, 128) >>
+    publisher_identifier: call!(take_string_trim, 128) >>
+    data_preparer_identifier: call!(take_string_trim, 128) >>
+    application_identifier: call!(take_string_trim, 128) >>
+    copyright_file_identifier: call!(take_string_trim, 38) >>
+    abstract_file_identifier: call!(take_string_trim, 36) >>
+    bibliographic_file_identifier: call!(take_string_trim, 37) >>
 
     creation_time: date_time_ascii >>
     modification_time: date_time_ascii >>
@@ -116,8 +119,8 @@ named!(primary_descriptor<VolumeDescriptor>, do_parse!(
     file_structure_version: le_u8 >>
 
     (VolumeDescriptor::Primary {
-        system_identifier: system_identifier.trim_end().to_string(),
-        volume_identifier: volume_identifier.trim_end().to_string(),
+        system_identifier,
+        volume_identifier,
         volume_space_size,
         volume_set_size,
         volume_sequence_number,
@@ -130,13 +133,13 @@ named!(primary_descriptor<VolumeDescriptor>, do_parse!(
         root_directory_entry: root_directory_entry.0,
         root_directory_entry_identifier: root_directory_entry.1,
 
-        volume_set_identifier: volume_set_identifier.trim_end().to_string(),
-        publisher_identifier: publisher_identifier.trim_end().to_string(),
-        data_preparer_identifier: data_preparer_identifier.trim_end().to_string(),
-        application_identifier: application_identifier.trim_end().to_string(),
-        copyright_file_identifier: copyright_file_identifier.trim_end().to_string(),
-        abstract_file_identifier: abstract_file_identifier.trim_end().to_string(),
-        bibliographic_file_identifier: bibliographic_file_identifier.trim_end().to_string(),
+        volume_set_identifier,
+        publisher_identifier,
+        data_preparer_identifier,
+        application_identifier,
+        copyright_file_identifier,
+        abstract_file_identifier,
+        bibliographic_file_identifier,
 
         creation_time,
         modification_time,

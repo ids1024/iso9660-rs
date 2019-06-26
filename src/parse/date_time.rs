@@ -28,22 +28,23 @@ named!(pub date_time<Tm>, do_parse!(
 
 ));
 
+named_args!(ascii_i32(n: usize)<i32>, flat_map!(take(n), parse_to!(i32)));
 named!(pub date_time_ascii<Tm>, do_parse!(
-    year:        flat_map!(take(4usize), parse_to!(i32)) >>
-    month:       flat_map!(take(2usize), parse_to!(i32)) >>
-    day:         flat_map!(take(2usize), parse_to!(i32)) >>
-    hour:        flat_map!(take(2usize), parse_to!(i32)) >>
-    minute:      flat_map!(take(2usize), parse_to!(i32)) >>
-    second:      flat_map!(take(2usize), parse_to!(i32)) >>
-    centisecond: flat_map!(take(2usize), parse_to!(i32)) >>
+    tm_year:     call!(ascii_i32, 4) >>
+    tm_mon:      call!(ascii_i32, 2) >>
+    tm_mday:     call!(ascii_i32, 2) >>
+    tm_hour:     call!(ascii_i32, 2) >>
+    tm_min:      call!(ascii_i32, 2) >>
+    tm_sec:      call!(ascii_i32, 2) >>
+    centisecond: call!(ascii_i32, 2) >>
     gmt_offset:  le_u8    >>
     (Tm {
-        tm_year: year,
-        tm_mon: month,
-        tm_hour: hour,
-        tm_min: minute,
-        tm_sec: second,
-        tm_mday: day,
+        tm_year,
+        tm_mon,
+        tm_hour,
+        tm_min,
+        tm_sec,
+        tm_mday,
         tm_wday: -1, // XXX
         tm_yday: -1, // XXX
         tm_nsec: centisecond * 10_000_000,
