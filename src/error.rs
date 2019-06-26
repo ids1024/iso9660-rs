@@ -35,7 +35,7 @@ impl Display for ISOError {
 }
 
 impl Error for ISOError {
-    fn cause(&self) -> Option<&Error> {
+    fn cause(&self) -> Option<&dyn Error> {
         match *self {
             ISOError::Io(ref err) => Some(err),
             ISOError::Utf8(ref err) => Some(err),
