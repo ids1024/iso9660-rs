@@ -45,29 +45,24 @@ impl Error for ISOError {
     }
 }
 
-impl From<io::Error> for ISOError {
-    fn from(err: io::Error) -> ISOError {
-        ISOError::Io(err)
-    }
+macro_rules! impl_from_error {
+    ($t:ty, $e:expr) => (
+        impl From<$t> for ISOError {
+            fn from(err: $t) -> ISOError {
+                $e(err)
+            }
+        }
+    )
 }
 
-impl From<str::Utf8Error> for ISOError {
-    fn from(err: str::Utf8Error) -> ISOError {
-        ISOError::Utf8(err)
-    }
-}
+impl_from_error!(io::Error, ISOError::Io);
+impl_from_error!(str::Utf8Error, ISOError::Utf8);
+impl_from_error!(ParseIntError, ISOError::ParseInt);
 
-impl From<ParseIntError> for ISOError {
-    fn from(err: ParseIntError) -> ISOError {
-        ISOError::ParseInt(err)
-    }
-}
-
-impl<'a> From<nom::Err<(&'a [u8], nom::error::ErrorKind)>> for ISOError {
+impl From<nom::Err<(&[u8], nom::error::ErrorKind)>> for ISOError {
     fn from(err: nom::Err<(&[u8], nom::error::ErrorKind)>) -> ISOError {
         ISOError::Nom(match err {
-            nom::Err::Error(e) => e.1,
-            nom::Err::Failure(e) => e.1,
+            nom::Err::Error(e) | nom::Err::Failure(e) => e.1,
             nom::Err::Incomplete(_) => panic!(), // XXX
         })
     }
