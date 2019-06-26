@@ -57,13 +57,17 @@ impl VolumeDescriptor {
     }
 }
 
+named_args!(take_string_trim(n: usize)<String>,
+    map!(map!(take_str!(n), str::trim_end), str::to_string)
+);
+
 named!(boot_record<VolumeDescriptor>, do_parse!(
-    boot_system_identifier: take_str!(32) >>
-    boot_identifier:        take_str!(32) >>
-    data:                   take!(1977)   >>
+    boot_system_identifier: call!(take_string_trim, 32) >>
+    boot_identifier:        call!(take_string_trim, 32) >>
+    data:                   take!(1977)                 >>
     (VolumeDescriptor::BootRecord {
-        boot_system_identifier: boot_system_identifier.trim_end().to_string(),
-        boot_identifier: boot_identifier.trim_end().to_string(),
+        boot_system_identifier,
+        boot_identifier,
         data: data.to_vec()
     })
 ));
@@ -81,9 +85,6 @@ fn volume_descriptor(i: &[u8]) -> IResult<&[u8], Option<VolumeDescriptor>> {
     }
 }
 
-named_args!(take_string_trim(n: usize)<String>,
-    map!(map!(take_str!(n), str::trim_end), str::to_string)
-);
 named!(primary_descriptor<VolumeDescriptor>, do_parse!(
     take!(1) >> // padding
     system_identifier: call!(take_string_trim, 32) >>
