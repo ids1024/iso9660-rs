@@ -1,21 +1,15 @@
 // SPDX-License-Identifier: (MIT OR Apache-2.0)
 
 use nom::number::complete::*;
+use nom::sequence::terminated;
+use nom::bytes::complete::take;
 
 // ISO 9660 uses a representation for integers with both little
 // and big endian representations of the same number.
 
-named!(pub both_endian16<&[u8], u16>, do_parse!(
-    // Only reading the little endian version.
-    // The Linux kernel does the same, with a comment about some programs
-    // generating invalid ISO with incorrect big endian values.
-    val: le_u16 >>
-         take!(2) >>
-    (val)
-));
+// This only reads the little endian version.
+// The Linux kernel does the same, with a comment about some programs
+// generating invalid ISO with incorrect big endian values.
 
-named!(pub both_endian32<&[u8], u32>, do_parse!(
-    val: le_u32 >>
-         take!(4) >>
-    (val)
-));
+named!(pub both_endian16<u16>, call!(terminated(le_u16, take(2usize))));
+named!(pub both_endian32<u32>, call!(terminated(le_u32, take(4usize))));

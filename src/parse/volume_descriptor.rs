@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: (MIT OR Apache-2.0)
 
 use time::Tm;
+use nom::IResult;
 use nom::number::complete::*;
+use nom::bytes::complete::tag;
+use nom::combinator::map;
 
 use super::both_endian::{both_endian16, both_endian32};
 use super::date_time::date_time_ascii;
@@ -54,7 +57,7 @@ impl VolumeDescriptor {
     }
 }
 
-named!(boot_record<&[u8], VolumeDescriptor>, do_parse!(
+named!(boot_record<VolumeDescriptor>, do_parse!(
     boot_system_identifier: take_str!(32) >>
     boot_identifier:        take_str!(32) >>
     data:                   take!(1977)   >>
@@ -65,23 +68,20 @@ named!(boot_record<&[u8], VolumeDescriptor>, do_parse!(
     })
 ));
 
-named!(volume_descriptor<&[u8], Option<VolumeDescriptor>>, do_parse!(
-    type_code: le_u8         >>
-               tag!("CD001") >>
-               tag!("\u{1}") >>
+fn volume_descriptor(i: &[u8]) -> IResult<&[u8], Option<VolumeDescriptor>> {
+    let (i, type_code) = le_u8(i)?;
+    let (i, _) = tag("CD001\u{1}")(i)?;
+    match type_code {
+        0 => map(boot_record, Some)(i),
+        1 => map(primary_descriptor, Some)(i),
+        //2 => map(supplementary_volume_descriptor, Some)(i),
+        //3 => map!(volume_partition_descriptor, Some)(i),
+        255 => Ok((i, Some(VolumeDescriptor::VolumeDescriptorSetTerminator))),
+        _ => Ok((i, None))
+    }
+}
 
-    res: switch!(value!(type_code),
-        0 => map!(call!(boot_record), Some)        |
-        1 => map!(call!(primary_descriptor), Some) |
-        //2 => map!(call!(supplementary_volume_descriptor), Some) |
-        //3 => map!(call!(volume_partition_descriptor), Some)        |
-        255 => value!(Some(VolumeDescriptor::VolumeDescriptorSetTerminator)) |
-        _ => value!(None)
-    ) >>
-    (res)
-));
-
-named!(primary_descriptor<&[u8], VolumeDescriptor>, do_parse!(
+named!(primary_descriptor<VolumeDescriptor>, do_parse!(
     take!(1) >> // padding
     system_identifier: take_str!(32) >>
     volume_identifier: take_str!(32) >>

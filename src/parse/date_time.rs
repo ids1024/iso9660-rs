@@ -2,8 +2,9 @@
 
 use time::Tm;
 use nom::number::complete::le_u8;
+use nom::bytes::complete::take;
 
-named!(pub date_time<&[u8], Tm>, do_parse!(
+named!(pub date_time<Tm>, do_parse!(
     year:       le_u8 >> // years since 1900
     month:      le_u8 >>
     day:        le_u8 >>
@@ -27,14 +28,14 @@ named!(pub date_time<&[u8], Tm>, do_parse!(
 
 ));
 
-named!(pub date_time_ascii<&[u8], Tm>, do_parse!(
-    year:        flat_map!(take!(4), parse_to!(i32)) >>
-    month:       flat_map!(take!(2), parse_to!(i32)) >>
-    day:         flat_map!(take!(2), parse_to!(i32)) >>
-    hour:        flat_map!(take!(2), parse_to!(i32)) >>
-    minute:      flat_map!(take!(2), parse_to!(i32)) >>
-    second:      flat_map!(take!(2), parse_to!(i32)) >>
-    centisecond: flat_map!(take!(2), parse_to!(i32)) >>
+named!(pub date_time_ascii<Tm>, do_parse!(
+    year:        flat_map!(take(4usize), parse_to!(i32)) >>
+    month:       flat_map!(take(2usize), parse_to!(i32)) >>
+    day:         flat_map!(take(2usize), parse_to!(i32)) >>
+    hour:        flat_map!(take(2usize), parse_to!(i32)) >>
+    minute:      flat_map!(take(2usize), parse_to!(i32)) >>
+    second:      flat_map!(take(2usize), parse_to!(i32)) >>
+    centisecond: flat_map!(take(2usize), parse_to!(i32)) >>
     gmt_offset:  le_u8    >>
     (Tm {
         tm_year: year,

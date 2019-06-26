@@ -5,6 +5,7 @@ use time::Tm;
 use super::both_endian::{both_endian16, both_endian32};
 use nom::number::complete::le_u8;
 use super::date_time::date_time;
+use nom::multi::length_data;
 use crate::Result;
 
 bitflags! {
@@ -38,7 +39,7 @@ impl DirectoryEntryHeader {
     }
 }
 
-named!(pub directory_entry<&[u8], (DirectoryEntryHeader, String)>, do_parse!(
+named!(pub directory_entry<(DirectoryEntryHeader, String)>, do_parse!(
     length:                           le_u8         >>
     extended_attribute_record_length: le_u8         >>
     extent_loc:                       both_endian32 >>
@@ -48,7 +49,7 @@ named!(pub directory_entry<&[u8], (DirectoryEntryHeader, String)>, do_parse!(
     file_unit_size:                   le_u8         >>
     interleave_gap_size:              le_u8         >>
     volume_sequence_number:           both_endian16 >>
-    identifier:                       flat_map!(length_data!(le_u8), parse_to!(String)) >>
+    identifier:                       flat_map!(length_data(le_u8), parse_to!(String)) >>
     // After the file identifier, ISO 9660 allows addition space for
     // system use. Ignore that for now.
 
