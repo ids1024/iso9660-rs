@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: (MIT OR Apache-2.0)
 
 use time::Tm;
-use nom::number::Endianness;
-use nom::number::complete::le_u8;
+use nom::number::complete::*;
 
 use super::both_endian::{both_endian16, both_endian32};
 use super::date_time::date_time_ascii;
@@ -94,8 +93,8 @@ named!(primary_descriptor<&[u8], VolumeDescriptor>, do_parse!(
     logical_block_size: both_endian16 >>
 
     path_table_size: both_endian32 >>
-    path_table_loc: u32!(Endianness::Little) >>
-    optional_path_table_loc: u32!(Endianness::Little) >>
+    path_table_loc: le_u32 >>
+    optional_path_table_loc: le_u32 >>
     take!(4) >> // path_table_loc_be
     take!(4) >> // optional_path_table_loc_be
 
