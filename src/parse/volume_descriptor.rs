@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: (MIT OR Apache-2.0)
 
-#![allow(dead_code)]
-
-use nom::{le_u32, le_u8};
 use time::Tm;
+use nom::number::Endianness;
+use nom::number::complete::le_u8;
 
 use super::both_endian::{both_endian16, both_endian32};
 use super::date_time::date_time_ascii;
@@ -95,12 +94,12 @@ named!(primary_descriptor<&[u8], VolumeDescriptor>, do_parse!(
     logical_block_size: both_endian16 >>
 
     path_table_size: both_endian32 >>
-    path_table_loc: le_u32 >>
-    optional_path_table_loc: le_u32 >>
+    path_table_loc: u32!(Endianness::Little) >>
+    optional_path_table_loc: u32!(Endianness::Little) >>
     take!(4) >> // path_table_loc_be
     take!(4) >> // optional_path_table_loc_be
 
-    root_directory_entry: length_value!(value!(34), directory_entry) >>
+    root_directory_entry: directory_entry >>
 
     volume_set_identifier: take_str!(128) >>
     publisher_identifier: take_str!(128) >>

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: (MIT OR Apache-2.0)
 
-use nom::le_u8;
 use time::Tm;
+use nom::number::complete::le_u8;
 
 named!(pub date_time<&[u8], Tm>, do_parse!(
     year:       le_u8 >> // years since 1900

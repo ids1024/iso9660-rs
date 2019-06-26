@@ -14,7 +14,7 @@ pub enum ISOError {
     InvalidFs(&'static str),
     ParseInt(ParseIntError),
     ReadSize(usize, usize),
-    Nom(nom::ErrorKind),
+    Nom(nom::error::ErrorKind),
 }
 
 impl Display for ISOError {
@@ -63,8 +63,12 @@ impl From<ParseIntError> for ISOError {
     }
 }
 
-impl<'a> From<nom::Err<&'a [u8]>> for ISOError {
-    fn from(err: nom::Err<&[u8]>) -> ISOError {
-        ISOError::Nom(err.into_error_kind())
+impl<'a> From<nom::Err<(&'a [u8], nom::error::ErrorKind)>> for ISOError {
+    fn from(err: nom::Err<(&[u8], nom::error::ErrorKind)>) -> ISOError {
+        ISOError::Nom(match err {
+            nom::Err::Error(e) => e.1,
+            nom::Err::Failure(e) => e.1,
+            nom::Err::Incomplete(_) => panic!(), // XXX
+        })
     }
 }
