@@ -10,6 +10,15 @@ pub trait ISO9660Reader {
     fn read_at(&mut self, buf: &mut [u8], lba: u64) -> Result<usize>;
 }
 
+#[cfg(not(feature = "nightly"))]
+impl<T: Read + Seek> ISO9660Reader for T {
+    fn read_at(&mut self, buf: &mut [u8], lba: u64) -> Result<usize> {
+        self.seek(SeekFrom::Start(lba * 2048))?;
+        Ok(self.read(buf)?)
+    }
+}
+
+#[cfg(feature = "nightly")]
 impl<T: Read + Seek> ISO9660Reader for T {
     default fn read_at(&mut self, buf: &mut [u8], lba: u64) -> Result<usize> {
         self.seek(SeekFrom::Start(lba * 2048))?;
@@ -17,6 +26,7 @@ impl<T: Read + Seek> ISO9660Reader for T {
     }
 }
 
+#[cfg(feature = "nightly")]
 impl ISO9660Reader for File {
     fn read_at(&mut self, buf: &mut [u8], lba: u64) -> Result<usize> {
         #[cfg(unix)]

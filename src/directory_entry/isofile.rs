@@ -2,7 +2,7 @@
 
 use std::cmp::min;
 use std::fmt;
-use std::io::{self, Initializer, Read, Seek, SeekFrom, Write};
+use std::io::{self, Read, Seek, SeekFrom, Write};
 use std::mem;
 use std::str::FromStr;
 
@@ -87,8 +87,9 @@ pub struct ISOFileReader<T: ISO9660Reader> {
 }
 
 impl<T: ISO9660Reader> Read for ISOFileReader<T> {
-    unsafe fn initializer(&self) -> Initializer {
-        Initializer::nop()
+    #[cfg(feature = "nightly")]
+    unsafe fn initializer(&self) -> std::io::Initializer {
+        std::io::Initializer::nop()
     }
 
     fn read(&mut self, mut buf: &mut [u8]) -> io::Result<usize> {
