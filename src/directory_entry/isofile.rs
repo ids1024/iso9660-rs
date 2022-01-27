@@ -37,12 +37,16 @@ impl<T: ISO9660Reader> ISOFile<T> {
         file: FileRef<T>,
     ) -> Result<ISOFile<T>> {
         // Files (not directories) in ISO 9660 have a version number, which is
-        // provided at the end of the identifier, seperated by ';'
-        let error = ISOError::InvalidFs("File indentifier missing ';'");
-        let idx = identifier.rfind(';').ok_or(error)?;
-
-        let version = u16::from_str(&identifier[idx + 1..])?;
-        identifier.truncate(idx);
+        // provided at the end of the identifier, seperated by ';'.
+        // If not, assume 1.
+        let version = match identifier.rfind(';') {
+            Some(idx) => {
+                let version = u16::from_str(&identifier[idx + 1..])?;
+                identifier.truncate(idx);
+                version
+            },
+            None => 1
+        };
 
         // Files without an extension have a '.' at the end
         if identifier.ends_with('.') {
