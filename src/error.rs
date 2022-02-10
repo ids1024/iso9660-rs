@@ -13,6 +13,7 @@ pub enum ISOError {
     ParseInt(ParseIntError),
     ReadSize(usize, usize),
     Nom(nom::error::ErrorKind),
+    IntoInner(&'static str),
 }
 
 impl Display for ISOError {
@@ -28,6 +29,7 @@ impl Display for ISOError {
                 size, size_read
             ),
             ISOError::Nom(ref err) => write!(f, "Parse error: {:?}", err),
+            ISOError::IntoInner(msg) => write!(f, "Into inner error: {}", msg),
         }
     }
 }

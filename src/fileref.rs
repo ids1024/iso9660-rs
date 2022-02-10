@@ -62,4 +62,14 @@ impl<T: ISO9660Reader> FileRef<T> {
     pub fn read_at(&self, buf: &mut [u8], lba: u64) -> Result<usize> {
         (*self.0).borrow_mut().read_at(buf, lba)
     }
+
+    /// Try returning inner value (will work if Rc has exactly one strong ref)
+    /// Returns Self on error
+    pub fn try_into_inner(self) -> std::result::Result<T, Self> {
+        match Rc::<RefCell<T>>::try_unwrap(self.0) {
+            Ok(refcell) => Ok(refcell.into_inner()),
+            Err(rcrefcell) => Err(FileRef(rcrefcell))
+        }
+    }
+
 }
