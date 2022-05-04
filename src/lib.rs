@@ -46,7 +46,7 @@ macro_rules! primary_prop_str {
 
 impl<T: ISO9660Reader> ISO9660<T> {
     pub fn new(mut reader: T) -> Result<ISO9660<T>> {
-        let mut buf: [u8; 2048] = unsafe { mem::uninitialized() };
+        let mut buf: [u8; 2048] = [0; 2048];
         let mut root = None;
         let mut primary = None;
 

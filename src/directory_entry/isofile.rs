@@ -71,7 +71,7 @@ impl<T: ISO9660Reader> ISOFile<T> {
 
     pub fn read(&self) -> ISOFileReader<T> {
         ISOFileReader {
-            buf: unsafe { mem::uninitialized() },
+            buf: [0; 2048],
             buf_lba: None,
             seek: 0,
             start_lba: self.header.extent_loc,

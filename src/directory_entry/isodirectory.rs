@@ -100,7 +100,7 @@ impl<T: ISO9660Reader> ISODirectory<T> {
     pub fn contents(&self) -> ISODirectoryIterator<T> {
         ISODirectoryIterator {
             directory: self,
-            block: unsafe { mem::uninitialized() },
+            block: [0; 2048],
             block_num: None,
             next_offset: Some(0),
         }

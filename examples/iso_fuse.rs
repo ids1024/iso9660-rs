@@ -168,7 +168,7 @@ impl fuse::Filesystem for ISOFuse {
             return;
         }
 
-        let mut block = unsafe { std::mem::uninitialized() };
+        let mut block = [0; 2048];
         let mut block_num = None;
         let mut offset = offset as u64;
 
