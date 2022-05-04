@@ -2,7 +2,7 @@
 
 use std::cell::RefCell;
 use std::fs::File;
-use std::io::{Result, Read, Seek, SeekFrom};
+use std::io::{Read, Result, Seek, SeekFrom};
 use std::rc::Rc;
 
 pub trait ISO9660Reader {

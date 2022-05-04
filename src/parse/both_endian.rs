@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: (MIT OR Apache-2.0)
 
+use nom::bytes::complete::take;
 use nom::number::complete::*;
 use nom::sequence::terminated;
-use nom::bytes::complete::take;
 
 // ISO 9660 uses a representation for integers with both little
 // and big endian representations of the same number.

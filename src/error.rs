@@ -46,13 +46,13 @@ impl Error for ISOError {
 }
 
 macro_rules! impl_from_error {
-    ($t:ty, $e:expr) => (
+    ($t:ty, $e:expr) => {
         impl From<$t> for ISOError {
             fn from(err: $t) -> ISOError {
                 $e(err)
             }
         }
-    )
+    };
 }
 
 impl_from_error!(io::Error, ISOError::Io);

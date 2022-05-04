@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: (MIT OR Apache-2.0)
 
-use time::Tm;
-use nom::IResult;
-use nom::number::complete::*;
 use nom::bytes::complete::tag;
 use nom::combinator::map;
+use nom::number::complete::*;
+use nom::IResult;
+use time::Tm;
 
 use super::both_endian::{both_endian16, both_endian32};
 use super::date_time::date_time_ascii;
@@ -61,16 +61,19 @@ named_args!(take_string_trim(n: usize)<String>,
     map!(map!(take_str!(n), str::trim_end), str::to_string)
 );
 
-named!(boot_record<VolumeDescriptor>, do_parse!(
-    boot_system_identifier: call!(take_string_trim, 32) >>
-    boot_identifier:        call!(take_string_trim, 32) >>
-    data:                   take!(1977)                 >>
-    (VolumeDescriptor::BootRecord {
-        boot_system_identifier,
-        boot_identifier,
-        data: data.to_vec()
-    })
-));
+named!(
+    boot_record<VolumeDescriptor>,
+    do_parse!(
+        boot_system_identifier: call!(take_string_trim, 32)
+            >> boot_identifier: call!(take_string_trim, 32)
+            >> data: take!(1977)
+            >> (VolumeDescriptor::BootRecord {
+                boot_system_identifier,
+                boot_identifier,
+                data: data.to_vec()
+            })
+    )
+);
 
 fn volume_descriptor(i: &[u8]) -> IResult<&[u8], Option<VolumeDescriptor>> {
     let (i, type_code) = le_u8(i)?;
@@ -81,12 +84,14 @@ fn volume_descriptor(i: &[u8]) -> IResult<&[u8], Option<VolumeDescriptor>> {
         //2 => map(supplementary_volume_descriptor, Some)(i),
         //3 => map!(volume_partition_descriptor, Some)(i),
         255 => Ok((i, Some(VolumeDescriptor::VolumeDescriptorSetTerminator))),
-        _ => Ok((i, None))
+        _ => Ok((i, None)),
     }
 }
 
-named!(primary_descriptor<VolumeDescriptor>, do_parse!(
-    take!(1) >> // padding
+named!(
+    primary_descriptor<VolumeDescriptor>,
+    do_parse!(
+        take!(1) >> // padding
     system_identifier: call!(take_string_trim, 32) >>
     volume_identifier: call!(take_string_trim, 32) >>
     take!(8) >> // padding
@@ -149,4 +154,5 @@ named!(primary_descriptor<VolumeDescriptor>, do_parse!(
 
         file_structure_version,
     })
-));
+    )
+);

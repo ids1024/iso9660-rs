@@ -41,7 +41,7 @@ macro_rules! primary_prop_str {
                 unreachable!()
             }
         }
-    }
+    };
 }
 
 impl<T: ISO9660Reader> ISO9660<T> {
@@ -76,7 +76,10 @@ impl<T: ISO9660Reader> ISO9660<T> {
                         return Err(ISOError::InvalidFs("Block size not 2048"));
                     }
 
-                    root = Some((root_directory_entry.clone(), root_directory_entry_identifier.clone()));
+                    root = Some((
+                        root_directory_entry.clone(),
+                        root_directory_entry_identifier.clone(),
+                    ));
                     primary = descriptor;
                 }
                 Some(VolumeDescriptor::VolumeDescriptorSetTerminator) => break,

@@ -3,10 +3,10 @@
 use time::Tm;
 
 use super::both_endian::{both_endian16, both_endian32};
-use nom::number::complete::le_u8;
 use super::date_time::date_time;
-use nom::multi::length_data;
 use crate::Result;
+use nom::multi::length_data;
+use nom::number::complete::le_u8;
 
 bitflags! {
     pub struct FileFlags: u8 {

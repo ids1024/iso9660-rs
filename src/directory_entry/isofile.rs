@@ -44,8 +44,8 @@ impl<T: ISO9660Reader> ISOFile<T> {
                 let version = u16::from_str(&identifier[idx + 1..])?;
                 identifier.truncate(idx);
                 version
-            },
-            None => 1
+            }
+            None => 1,
         };
 
         // Files without an extension have a '.' at the end
