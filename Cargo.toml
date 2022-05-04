@@ -1,5 +1,6 @@
 [package]
 name = "iso9660"
+description = "(Incomplete) implementation of ISO9660 filesystem"
 version = "0.1.0"
 authors = ["Ian Douglas Scott <ian@iandouglasscott.com>"]
 edition = "2018"
