@@ -8,7 +8,6 @@ extern crate bitflags;
 #[macro_use]
 extern crate nom;
 
-use std::mem;
 use std::result;
 
 pub use directory_entry::{

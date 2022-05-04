@@ -3,13 +3,12 @@
 use std::cmp::min;
 use std::fmt;
 use std::io::{self, Read, Seek, SeekFrom, Write};
-use std::mem;
 use std::str::FromStr;
 
 use time::Tm;
 
 use super::DirectoryEntryHeader;
-use crate::{FileRef, ISO9660Reader, ISOError, Result};
+use crate::{FileRef, ISO9660Reader, Result};
 
 #[derive(Clone)]
 pub struct ISOFile<T: ISO9660Reader> {

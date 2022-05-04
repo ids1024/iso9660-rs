@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: (MIT OR Apache-2.0)
 
 use std::cell::RefCell;
+#[cfg(feature = "nightly")]
 use std::fs::File;
 use std::io::{Read, Result, Seek, SeekFrom};
 use std::rc::Rc;

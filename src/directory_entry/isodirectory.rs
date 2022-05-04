@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: (MIT OR Apache-2.0)
 
-use std::{fmt, mem, str};
+use std::{fmt, str};
 
 use time::Tm;
 

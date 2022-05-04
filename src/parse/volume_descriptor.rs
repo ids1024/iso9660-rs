@@ -11,6 +11,7 @@ use super::date_time::date_time_ascii;
 use super::directory_entry::{directory_entry, DirectoryEntryHeader};
 use crate::ISOError;
 
+#[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub(crate) enum VolumeDescriptor {
     Primary {
