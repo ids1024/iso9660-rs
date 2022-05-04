@@ -5,8 +5,6 @@ use std::fmt::{self, Display};
 use std::num::ParseIntError;
 use std::{io, str};
 
-use nom;
-
 #[derive(Debug)]
 pub enum ISOError {
     Io(io::Error),
