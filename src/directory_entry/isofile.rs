@@ -5,7 +5,7 @@ use std::fmt;
 use std::io::{self, Read, Seek, SeekFrom, Write};
 use std::str::FromStr;
 
-use time::Tm;
+use time::OffsetDateTime;
 
 use super::DirectoryEntryHeader;
 use crate::{FileRef, ISO9660Reader, Result};
@@ -64,7 +64,7 @@ impl<T: ISO9660Reader> ISOFile<T> {
         self.header.extent_length
     }
 
-    pub fn time(&self) -> Tm {
+    pub fn time(&self) -> OffsetDateTime {
         self.header.time
     }
 

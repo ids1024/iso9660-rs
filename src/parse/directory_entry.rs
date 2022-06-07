@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: (MIT OR Apache-2.0)
 
-use time::Tm;
+use time::OffsetDateTime;
 
 use super::both_endian::{both_endian16, both_endian32};
 use super::date_time::date_time;
@@ -26,7 +26,7 @@ pub struct DirectoryEntryHeader {
     pub extended_attribute_record_length: u8,
     pub extent_loc: u32,
     pub extent_length: u32,
-    pub time: Tm,
+    pub time: OffsetDateTime,
     pub file_flags: FileFlags,
     pub file_unit_size: u8,
     pub interleave_gap_size: u8,
