@@ -5,23 +5,23 @@ use std::ffi::OsStr;
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 
-use fuse::{ReplyAttr, ReplyData, ReplyDirectory, ReplyEmpty, ReplyEntry, ReplyOpen, Request};
+use fuser::{ReplyAttr, ReplyData, ReplyDirectory, ReplyEmpty, ReplyEntry, ReplyOpen, Request};
 use libc::{EISDIR, ENOTDIR};
-use time::Timespec;
+use std::time::Duration;
 
 use iso9660::{DirectoryEntry, ISODirectory, ISOFileReader, ISO9660};
 
-fn entry_to_filetype(entry: &DirectoryEntry<File>) -> fuse::FileType {
+fn entry_to_filetype(entry: &DirectoryEntry<File>) -> fuser::FileType {
     match entry {
-        DirectoryEntry::File(_) => fuse::FileType::RegularFile,
-        DirectoryEntry::Directory(_) => fuse::FileType::Directory,
+        DirectoryEntry::File(_) => fuser::FileType::RegularFile,
+        DirectoryEntry::Directory(_) => fuser::FileType::Directory,
     }
 }
 
-fn get_fileattr(ino: u64, entry: &DirectoryEntry<File>) -> fuse::FileAttr {
+fn get_fileattr(ino: u64, entry: &DirectoryEntry<File>) -> fuser::FileAttr {
     let blocks = (entry.header().extent_length + 2048 - 1) / 2048; // ceil(len / 2048
-    let time = entry.header().time.to_timespec();
-    fuse::FileAttr {
+    let time = entry.header().time.into();
+    fuser::FileAttr {
         ino,
         size: entry.header().extent_length as u64,
         blocks: blocks as u64,
@@ -36,6 +36,7 @@ fn get_fileattr(ino: u64, entry: &DirectoryEntry<File>) -> fuse::FileAttr {
         gid: 0,
         rdev: 0,
         flags: 0,
+        blksize: 512,
     }
 }
 
@@ -55,13 +56,13 @@ impl ISOFuse {
         let iso9660 = ISO9660::new(file).unwrap();
         let mut inodes = HashMap::new();
         inodes.insert(
-            fuse::FUSE_ROOT_ID,
+            fuser::FUSE_ROOT_ID,
             DirectoryEntry::Directory(iso9660.root.clone()),
         );
         Self {
             _iso9660: iso9660,
             inodes,
-            inode_number: fuse::FUSE_ROOT_ID + 1,
+            inode_number: fuser::FUSE_ROOT_ID + 1,
             file_number: 0,
             directory_number: 0,
             open_files: HashMap::new(),
@@ -70,7 +71,7 @@ impl ISOFuse {
     }
 }
 
-impl fuse::Filesystem for ISOFuse {
+impl fuser::Filesystem for ISOFuse {
     fn lookup(&mut self, _req: &Request, parent: u64, name: &OsStr, reply: ReplyEntry) {
         let entry = self.inodes.get(&parent).unwrap();
         if let DirectoryEntry::Directory(directory) = entry {
@@ -80,7 +81,7 @@ impl fuse::Filesystem for ISOFuse {
                     self.inodes.insert(self.inode_number, entry);
                     self.inode_number += 1;
 
-                    reply.entry(&Timespec::new(0, 0), &fileattr, 0);
+                    reply.entry(&Duration::from_secs(0), &fileattr, 0);
                 }
                 Ok(None) => {}
                 Err(_) => {}
@@ -97,10 +98,10 @@ impl fuse::Filesystem for ISOFuse {
     fn getattr(&mut self, _req: &Request, ino: u64, reply: ReplyAttr) {
         let entry = self.inodes.get(&ino).unwrap();
         let fileattr = get_fileattr(ino, entry);
-        reply.attr(&Timespec::new(0, 0), &fileattr);
+        reply.attr(&Duration::from_secs(0), &fileattr);
     }
 
-    fn open(&mut self, _req: &Request, ino: u64, _flags: u32, reply: ReplyOpen) {
+    fn open(&mut self, _req: &Request, ino: u64, _flags: i32, reply: ReplyOpen) {
         let entry = self.inodes.get(&ino).unwrap();
         if let DirectoryEntry::File(file) = entry {
             self.open_files.insert(self.file_number, file.read());
@@ -118,6 +119,8 @@ impl fuse::Filesystem for ISOFuse {
         fh: u64,
         offset: i64,
         size: u32,
+        _flags: i32,
+        _lock_owner: Option<u64>,
         reply: ReplyData,
     ) {
         let file = self.open_files.get_mut(&fh).unwrap();
@@ -132,8 +135,8 @@ impl fuse::Filesystem for ISOFuse {
         _req: &Request,
         _ino: u64,
         fh: u64,
-        _flags: u32,
-        _lock_owner: u64,
+        _flags: i32,
+        _lock_owner: Option<u64>,
         _flush: bool,
         reply: ReplyEmpty,
     ) {
@@ -141,7 +144,7 @@ impl fuse::Filesystem for ISOFuse {
         reply.ok();
     }
 
-    fn opendir(&mut self, _req: &Request, ino: u64, _flags: u32, reply: ReplyOpen) {
+    fn opendir(&mut self, _req: &Request, ino: u64, _flags: i32, reply: ReplyOpen) {
         let entry = self.inodes.get(&ino).unwrap();
         if let DirectoryEntry::Directory(directory) = entry {
             self.open_directories
@@ -200,7 +203,7 @@ impl fuse::Filesystem for ISOFuse {
         reply.ok();
     }
 
-    fn releasedir(&mut self, _req: &Request, _ino: u64, fh: u64, _flags: u32, reply: ReplyEmpty) {
+    fn releasedir(&mut self, _req: &Request, _ino: u64, fh: u64, _flags: i32, reply: ReplyEmpty) {
         self.open_directories.remove(&fh);
         reply.ok();
     }
@@ -210,5 +213,5 @@ fn main() {
     let mut args = std::env::args().skip(1);
     let path = args.next().unwrap();
     let mount_path = args.next().unwrap();
-    fuse::mount(ISOFuse::new(path), &mount_path, &[]).unwrap();
+    fuser::mount2(ISOFuse::new(path), &mount_path, &[]).unwrap();
 }
