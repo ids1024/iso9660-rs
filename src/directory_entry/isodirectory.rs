@@ -2,7 +2,7 @@
 
 use std::{fmt, str};
 
-use time::Tm;
+use time::OffsetDateTime;
 
 use crate::parse::{DirectoryEntryHeader, FileFlags};
 use crate::{DirectoryEntry, FileRef, ISO9660Reader, ISOError, Result};
@@ -106,7 +106,7 @@ impl<T: ISO9660Reader> ISODirectory<T> {
         }
     }
 
-    pub fn time(&self) -> Tm {
+    pub fn time(&self) -> OffsetDateTime {
         self.header.time
     }
 

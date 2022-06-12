@@ -4,7 +4,7 @@ use nom::bytes::complete::tag;
 use nom::combinator::map;
 use nom::number::complete::*;
 use nom::IResult;
-use time::Tm;
+use time::OffsetDateTime;
 
 use super::both_endian::{both_endian16, both_endian32};
 use super::date_time::date_time_ascii;
@@ -37,10 +37,10 @@ pub(crate) enum VolumeDescriptor {
         abstract_file_identifier: String,
         bibliographic_file_identifier: String,
 
-        creation_time: Tm,
-        modification_time: Tm,
-        expiration_time: Tm,
-        effective_time: Tm,
+        creation_time: OffsetDateTime,
+        modification_time: OffsetDateTime,
+        expiration_time: OffsetDateTime,
+        effective_time: OffsetDateTime,
 
         file_structure_version: u8,
     },
