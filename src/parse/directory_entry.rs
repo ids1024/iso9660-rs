@@ -9,6 +9,7 @@ use nom::multi::length_data;
 use nom::number::complete::le_u8;
 
 bitflags! {
+    #[derive(Clone, Debug)]
     pub struct FileFlags: u8 {
         const EXISTANCE = 1 << 0;
         const DIRECTORY = 1 << 1;
