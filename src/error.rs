@@ -57,10 +57,10 @@ impl_from_error!(io::Error, ISOError::Io);
 impl_from_error!(str::Utf8Error, ISOError::Utf8);
 impl_from_error!(ParseIntError, ISOError::ParseInt);
 
-impl From<nom::Err<(&[u8], nom::error::ErrorKind)>> for ISOError {
-    fn from(err: nom::Err<(&[u8], nom::error::ErrorKind)>) -> ISOError {
+impl From<nom::Err<nom::error::Error<&[u8]>>> for ISOError {
+    fn from(err: nom::Err<nom::error::Error<&[u8]>>) -> ISOError {
         ISOError::Nom(match err {
-            nom::Err::Error(e) | nom::Err::Failure(e) => e.1,
+            nom::Err::Error(e) | nom::Err::Failure(e) => e.code,
             nom::Err::Incomplete(_) => panic!(), // XXX
         })
     }

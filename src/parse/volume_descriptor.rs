@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: (MIT OR Apache-2.0)
 
-use nom::bytes::complete::tag;
-use nom::combinator::map;
+use nom::bytes::complete::{tag, take};
+use nom::combinator::{map, map_res};
 use nom::number::complete::*;
+use nom::sequence::tuple;
 use nom::IResult;
+use std::str;
 use time::OffsetDateTime;
 
 use super::both_endian::{both_endian16, both_endian32};
@@ -58,23 +60,30 @@ impl VolumeDescriptor {
     }
 }
 
-named_args!(take_string_trim(n: usize)<String>,
-    map!(map!(take_str!(n), str::trim_end), str::to_string)
-);
+fn take_string_trim(count: usize) -> impl Fn(&[u8]) -> IResult<&[u8], String> {
+    move |i: &[u8]| {
+        map(
+            map(map_res(take(count), str::from_utf8), str::trim_end),
+            str::to_string,
+        )(i)
+    }
+}
 
-named!(
-    boot_record<VolumeDescriptor>,
-    do_parse!(
-        boot_system_identifier: call!(take_string_trim, 32)
-            >> boot_identifier: call!(take_string_trim, 32)
-            >> data: take!(1977)
-            >> (VolumeDescriptor::BootRecord {
-                boot_system_identifier,
-                boot_identifier,
-                data: data.to_vec()
-            })
-    )
-);
+fn boot_record(i: &[u8]) -> IResult<&[u8], VolumeDescriptor> {
+    let (i, (boot_system_identifier, boot_identifier, data)) = tuple((
+        take_string_trim(32usize),
+        take_string_trim(32usize),
+        take(1977usize),
+    ))(i)?;
+    Ok((
+        i,
+        VolumeDescriptor::BootRecord {
+            boot_system_identifier,
+            boot_identifier,
+            data: data.to_vec(),
+        },
+    ))
+}
 
 fn volume_descriptor(i: &[u8]) -> IResult<&[u8], Option<VolumeDescriptor>> {
     let (i, type_code) = le_u8(i)?;
@@ -89,71 +98,71 @@ fn volume_descriptor(i: &[u8]) -> IResult<&[u8], Option<VolumeDescriptor>> {
     }
 }
 
-named!(
-    primary_descriptor<VolumeDescriptor>,
-    do_parse!(
-        take!(1) >> // padding
-    system_identifier: call!(take_string_trim, 32) >>
-    volume_identifier: call!(take_string_trim, 32) >>
-    take!(8) >> // padding
-    volume_space_size: both_endian32 >>
-    take!(32) >> // padding
-    volume_set_size: both_endian16 >>
-    volume_sequence_number: both_endian16 >>
-    logical_block_size: both_endian16 >>
+fn primary_descriptor(i: &[u8]) -> IResult<&[u8], VolumeDescriptor> {
+    let (i, _) = take(1usize)(i)?; // padding
+    let (i, system_identifier) = take_string_trim(32usize)(i)?;
+    let (i, volume_identifier) = take_string_trim(32usize)(i)?;
+    let (i, _) = take(8usize)(i)?; // padding
+    let (i, volume_space_size) = both_endian32(i)?;
+    let (i, _) = take(32usize)(i)?; // padding
+    let (i, volume_set_size) = both_endian16(i)?;
+    let (i, volume_sequence_number) = both_endian16(i)?;
+    let (i, logical_block_size) = both_endian16(i)?;
 
-    path_table_size: both_endian32 >>
-    path_table_loc: le_u32 >>
-    optional_path_table_loc: le_u32 >>
-    take!(4) >> // path_table_loc_be
-    take!(4) >> // optional_path_table_loc_be
+    let (i, path_table_size) = both_endian32(i)?;
+    let (i, path_table_loc) = le_u32(i)?;
+    let (i, optional_path_table_loc) = le_u32(i)?;
+    let (i, _) = take(4usize)(i)?; // path_table_loc_be
+    let (i, _) = take(4usize)(i)?; // optional_path_table_loc_be
 
-    root_directory_entry: directory_entry >>
+    let (i, root_directory_entry) = directory_entry(i)?;
 
-    volume_set_identifier: call!(take_string_trim, 128) >>
-    publisher_identifier: call!(take_string_trim, 128) >>
-    data_preparer_identifier: call!(take_string_trim, 128) >>
-    application_identifier: call!(take_string_trim, 128) >>
-    copyright_file_identifier: call!(take_string_trim, 38) >>
-    abstract_file_identifier: call!(take_string_trim, 36) >>
-    bibliographic_file_identifier: call!(take_string_trim, 37) >>
+    let (i, volume_set_identifier) = take_string_trim(128)(i)?;
+    let (i, publisher_identifier) = take_string_trim(128)(i)?;
+    let (i, data_preparer_identifier) = take_string_trim(128)(i)?;
+    let (i, application_identifier) = take_string_trim(128)(i)?;
+    let (i, copyright_file_identifier) = take_string_trim(38)(i)?;
+    let (i, abstract_file_identifier) = take_string_trim(36)(i)?;
+    let (i, bibliographic_file_identifier) = take_string_trim(37)(i)?;
 
-    creation_time: date_time_ascii >>
-    modification_time: date_time_ascii >>
-    expiration_time: date_time_ascii >>
-    effective_time: date_time_ascii >>
+    let (i, creation_time) = date_time_ascii(i)?;
+    let (i, modification_time) = date_time_ascii(i)?;
+    let (i, expiration_time) = date_time_ascii(i)?;
+    let (i, effective_time) = date_time_ascii(i)?;
 
-    file_structure_version: le_u8 >>
+    let (i, file_structure_version) = le_u8(i)?;
 
-    (VolumeDescriptor::Primary {
-        system_identifier,
-        volume_identifier,
-        volume_space_size,
-        volume_set_size,
-        volume_sequence_number,
-        logical_block_size,
+    Ok((
+        i,
+        VolumeDescriptor::Primary {
+            system_identifier,
+            volume_identifier,
+            volume_space_size,
+            volume_set_size,
+            volume_sequence_number,
+            logical_block_size,
 
-        path_table_size,
-        path_table_loc,
-        optional_path_table_loc,
+            path_table_size,
+            path_table_loc,
+            optional_path_table_loc,
 
-        root_directory_entry: root_directory_entry.0,
-        root_directory_entry_identifier: root_directory_entry.1,
+            root_directory_entry: root_directory_entry.0,
+            root_directory_entry_identifier: root_directory_entry.1,
 
-        volume_set_identifier,
-        publisher_identifier,
-        data_preparer_identifier,
-        application_identifier,
-        copyright_file_identifier,
-        abstract_file_identifier,
-        bibliographic_file_identifier,
+            volume_set_identifier,
+            publisher_identifier,
+            data_preparer_identifier,
+            application_identifier,
+            copyright_file_identifier,
+            abstract_file_identifier,
+            bibliographic_file_identifier,
 
-        creation_time,
-        modification_time,
-        expiration_time,
-        effective_time,
+            creation_time,
+            modification_time,
+            expiration_time,
+            effective_time,
 
-        file_structure_version,
-    })
-    )
-);
+            file_structure_version,
+        },
+    ))
+}

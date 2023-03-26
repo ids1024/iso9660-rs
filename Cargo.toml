@@ -10,7 +10,7 @@ repository = "https://github.com/ids1024/iso9660-rs"
 [dependencies]
 time = "0.3"
 bitflags = "2.0"
-nom = "5.0"
+nom = "7.1"
 
 [dev-dependencies]
 md5 = "0.7"
