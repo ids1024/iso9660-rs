@@ -5,10 +5,14 @@ use time::OffsetDateTime;
 use super::both_endian::{both_endian16, both_endian32};
 use super::date_time::date_time;
 use crate::Result;
+use nom::combinator::{map, map_res};
 use nom::multi::length_data;
 use nom::number::complete::le_u8;
+use nom::IResult;
+use std::str;
 
 bitflags! {
+    #[derive(Clone, Debug)]
     pub struct FileFlags: u8 {
         const EXISTANCE = 1 << 0;
         const DIRECTORY = 1 << 1;
@@ -39,29 +43,35 @@ impl DirectoryEntryHeader {
     }
 }
 
-named!(pub directory_entry<(DirectoryEntryHeader, String)>, do_parse!(
-    length:                           le_u8         >>
-    extended_attribute_record_length: le_u8         >>
-    extent_loc:                       both_endian32 >>
-    extent_length:                    both_endian32 >>
-    time:                             date_time     >>
-    file_flags:                       le_u8         >>
-    file_unit_size:                   le_u8         >>
-    interleave_gap_size:              le_u8         >>
-    volume_sequence_number:           both_endian16 >>
-    identifier:                       flat_map!(length_data(le_u8), parse_to!(String)) >>
+pub fn directory_entry(i: &[u8]) -> IResult<&[u8], (DirectoryEntryHeader, String)> {
+    let (i, length) = le_u8(i)?;
+    let (i, extended_attribute_record_length) = le_u8(i)?;
+    let (i, extent_loc) = both_endian32(i)?;
+    let (i, extent_length) = both_endian32(i)?;
+    let (i, time) = date_time(i)?;
+    let (i, file_flags) = le_u8(i)?;
+    let (i, file_unit_size) = le_u8(i)?;
+    let (i, interleave_gap_size) = le_u8(i)?;
+    let (i, volume_sequence_number) = both_endian16(i)?;
+    let (i, identifier) = map(map_res(length_data(le_u8), str::from_utf8), str::to_string)(i)?;
     // After the file identifier, ISO 9660 allows addition space for
     // system use. Ignore that for now.
 
-    (DirectoryEntryHeader {
-        length,
-        extended_attribute_record_length,
-        extent_loc,
-        extent_length,
-        time,
-        file_flags: FileFlags::from_bits_truncate(file_flags),
-        file_unit_size,
-        interleave_gap_size,
-        volume_sequence_number,
-    }, identifier)
-));
+    Ok((
+        i,
+        (
+            DirectoryEntryHeader {
+                length,
+                extended_attribute_record_length,
+                extent_loc,
+                extent_length,
+                time,
+                file_flags: FileFlags::from_bits_truncate(file_flags),
+                file_unit_size,
+                interleave_gap_size,
+                volume_sequence_number,
+            },
+            identifier,
+        ),
+    ))
+}

@@ -3,6 +3,7 @@
 use nom::bytes::complete::take;
 use nom::number::complete::*;
 use nom::sequence::terminated;
+use nom::IResult;
 
 // ISO 9660 uses a representation for integers with both little
 // and big endian representations of the same number.
@@ -11,5 +12,10 @@ use nom::sequence::terminated;
 // The Linux kernel does the same, with a comment about some programs
 // generating invalid ISO with incorrect big endian values.
 
-named!(pub both_endian16<u16>, call!(terminated(le_u16, take(2usize))));
-named!(pub both_endian32<u32>, call!(terminated(le_u32, take(4usize))));
+pub fn both_endian16(i: &[u8]) -> IResult<&[u8], u16> {
+    terminated(le_u16, take(2usize))(i)
+}
+
+pub fn both_endian32(i: &[u8]) -> IResult<&[u8], u32> {
+    terminated(le_u32, take(4usize))(i)
+}
