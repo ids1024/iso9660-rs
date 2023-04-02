@@ -1,7 +1,7 @@
 [package]
 name = "iso9660"
 description = "(Incomplete) implementation of ISO9660 filesystem"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Ian Douglas Scott <ian@iandouglasscott.com>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
