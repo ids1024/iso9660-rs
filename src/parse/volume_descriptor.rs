@@ -39,10 +39,10 @@ pub(crate) enum VolumeDescriptor {
         abstract_file_identifier: String,
         bibliographic_file_identifier: String,
 
-        creation_time: OffsetDateTime,
-        modification_time: OffsetDateTime,
-        expiration_time: OffsetDateTime,
-        effective_time: OffsetDateTime,
+        creation_time: Option<OffsetDateTime>,
+        modification_time: Option<OffsetDateTime>,
+        expiration_time: Option<OffsetDateTime>,
+        effective_time: Option<OffsetDateTime>,
 
         file_structure_version: u8,
     },
@@ -125,10 +125,34 @@ fn primary_descriptor(i: &[u8]) -> IResult<&[u8], VolumeDescriptor> {
     let (i, abstract_file_identifier) = take_string_trim(36)(i)?;
     let (i, bibliographic_file_identifier) = take_string_trim(37)(i)?;
 
-    let (i, creation_time) = date_time_ascii(i)?;
-    let (i, modification_time) = date_time_ascii(i)?;
-    let (i, expiration_time) = date_time_ascii(i)?;
-    let (i, effective_time) = date_time_ascii(i)?;
+    let (i, creation_time) = match date_time_ascii(i) {
+        Ok((i, creation_time)) => (i, Some(creation_time)),
+        Err(err) => {
+            eprintln!("creation_time not parsed {:?}", err);
+            (i, None)
+        }
+    };
+    let (i, modification_time) = match date_time_ascii(i) {
+        Ok((i, modification_time)) => (i, Some(modification_time)),
+        Err(err) => {
+            eprintln!("modification_time not parsed {:?}", err);
+            (i, None)
+        }
+    };
+    let (i, expiration_time) = match date_time_ascii(i) {
+        Ok((i, expiration_time)) => (i, Some(expiration_time)),
+        Err(err) => {
+            eprintln!("expiration_time not parsed {:?}", err);
+            (i, None)
+        }
+    };
+    let (i, effective_time) = match date_time_ascii(i) {
+        Ok((i, effective_time)) => (i, Some(effective_time)),
+        Err(err) => {
+            eprintln!("effective_time not parsed {:?}", err);
+            (i, None)
+        }
+    };
 
     let (i, file_structure_version) = le_u8(i)?;
 
