@@ -77,7 +77,7 @@ impl<T: ISO9660Reader> ISODirectory<T> {
             *buf_block_num = Some(block_num);
         }
 
-        let (header, identifier) = DirectoryEntryHeader::parse(&block[block_pos..])?;
+        let (header, identifier) = DirectoryEntryHeader::parse(&block[block_pos..], self.header.character_encoding)?;
         block_pos += header.length as usize;
 
         let entry = DirectoryEntry::new(header, identifier, self.file.clone())?;
@@ -126,6 +126,24 @@ impl<T: ISO9660Reader> ISODirectory<T> {
         }
 
         Ok(None)
+    }
+
+    pub fn resolve_path(&self, path: &str) -> Result<Option<DirectoryEntry<T>>> {
+        // TODO: avoid clone()
+        let mut entry = DirectoryEntry::Directory(self.clone());
+        for segment in path.split('/').filter(|x| !x.is_empty()) {
+            let parent = match entry {
+                DirectoryEntry::Directory(dir) => dir,
+                _ => return Ok(None),
+            };
+
+            entry = match parent.find(segment)? {
+                Some(entry) => entry,
+                None => return Ok(None),
+            };
+        }
+
+        Ok(Some(entry))
     }
 }
 

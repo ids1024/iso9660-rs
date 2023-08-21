@@ -9,6 +9,7 @@ use std::{io, str};
 pub enum ISOError {
     Io(io::Error),
     Utf8(str::Utf8Error),
+    Utf16,
     InvalidFs(&'static str),
     ParseInt(ParseIntError),
     ReadSize(usize, usize),
@@ -20,6 +21,7 @@ impl Display for ISOError {
         match *self {
             ISOError::Io(ref err) => write!(f, "IO error: {}", err),
             ISOError::Utf8(ref err) => write!(f, "UTF8 error: {}", err),
+            ISOError::Utf16 => write!(f, "UTF-16 / UCS-2 conversion error"),
             ISOError::InvalidFs(msg) => write!(f, "Invalid ISO9660: {}", msg),
             ISOError::ParseInt(ref err) => write!(f, "Int parse error: {}", err),
             ISOError::ReadSize(size, size_read) => write!(
