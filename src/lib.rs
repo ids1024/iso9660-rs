@@ -27,14 +27,15 @@ mod parse;
 pub struct ISO9660<T: ISO9660Reader> {
     _file: FileRef<T>,
     pub root: ISODirectory<T>,
+    pub sup_root: Option<ISODirectory<T>>,
     primary: VolumeDescriptor,
 }
 
 macro_rules! primary_prop_str {
     ($name:ident) => {
         pub fn $name(&self) -> &str {
-            if let VolumeDescriptor::Primary { $name, .. } = &self.primary {
-                &$name
+            if let VolumeDescriptor::Primary(table) = &self.primary {
+                &table.$name
             } else {
                 unreachable!()
             }
@@ -45,8 +46,11 @@ macro_rules! primary_prop_str {
 impl<T: ISO9660Reader> ISO9660<T> {
     pub fn new(mut reader: T) -> Result<ISO9660<T>> {
         let mut buf: [u8; 2048] = [0; 2048];
+
         let mut root = None;
         let mut primary = None;
+
+        let mut sup_root = None;
 
         // Skip the "system area"
         let mut lba = 16;
@@ -61,13 +65,8 @@ impl<T: ISO9660Reader> ISO9660<T> {
 
             let descriptor = VolumeDescriptor::parse(&buf)?;
             match &descriptor {
-                Some(VolumeDescriptor::Primary {
-                    logical_block_size,
-                    root_directory_entry,
-                    root_directory_entry_identifier,
-                    ..
-                }) => {
-                    if *logical_block_size != 2048 {
+                Some(VolumeDescriptor::Primary(table)) => {
+                    if table.logical_block_size != 2048 {
                         // This is almost always the case, but technically
                         // not guaranteed by the standard.
                         // TODO: Implement this
@@ -75,10 +74,23 @@ impl<T: ISO9660Reader> ISO9660<T> {
                     }
 
                     root = Some((
-                        root_directory_entry.clone(),
-                        root_directory_entry_identifier.clone(),
+                        table.root_directory_entry.clone(),
+                        table.root_directory_entry_identifier.clone(),
                     ));
                     primary = descriptor;
+                },
+                Some(VolumeDescriptor::Supplementary(table)) => {
+                    if table.logical_block_size != 2048 {
+                        // This is almost always the case, but technically
+                        // not guaranteed by the standard.
+                        // TODO: Implement this
+                        return Err(ISOError::InvalidFs("Block size not 2048"));
+                    }
+
+                    sup_root = Some((
+                        table.root_directory_entry.clone(),
+                        table.root_directory_entry_identifier.clone(),
+                    ));
                 }
                 Some(VolumeDescriptor::VolumeDescriptorSetTerminator) => break,
                 _ => {}
@@ -89,6 +101,7 @@ impl<T: ISO9660Reader> ISO9660<T> {
 
         let file = FileRef::new(reader);
         let file2 = file.clone();
+        let file3 = file.clone();
 
         let (root, primary) = match (root, primary) {
             (Some(root), Some(primary)) => (root, primary),
@@ -100,26 +113,22 @@ impl<T: ISO9660Reader> ISO9660<T> {
         Ok(ISO9660 {
             _file: file,
             root: ISODirectory::new(root.0, root.1, file2),
+            sup_root: sup_root.map(|sup_root| ISODirectory::new(sup_root.0, sup_root.1, file3)),
             primary,
         })
     }
 
     pub fn open(&self, path: &str) -> Result<Option<DirectoryEntry<T>>> {
-        // TODO: avoid clone()
-        let mut entry = DirectoryEntry::Directory(self.root.clone());
-        for segment in path.split('/').filter(|x| !x.is_empty()) {
-            let parent = match entry {
-                DirectoryEntry::Directory(dir) => dir,
-                _ => return Ok(None),
-            };
-
-            entry = match parent.find(segment)? {
-                Some(entry) => entry,
-                None => return Ok(None),
-            };
-        }
-
-        Ok(Some(entry))
+        // Try finding the path in the supplementary directory structure if it exists
+        // If there's no supplementary structure or it doesn't have the file,
+        // check the primary.
+        Ok(
+            self.sup_root
+                .as_ref()
+                .and_then(|sup_root| sup_root.resolve_path(path).transpose())
+                .or_else(|| self.root.resolve_path(path).transpose())
+                .transpose()?
+        )
     }
 
     pub fn block_size(&self) -> u16 {
