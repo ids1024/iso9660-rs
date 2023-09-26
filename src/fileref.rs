@@ -23,7 +23,7 @@ impl<T: Read + Seek> ISO9660Reader for T {
 impl<T: Read + Seek> ISO9660Reader for T {
     default fn read_at(&mut self, buf: &mut [u8], lba: u64) -> Result<usize> {
         self.seek(SeekFrom::Start(lba * 2048))?;
-        self.read(buf)?
+        self.read(buf)
     }
 }
 
@@ -33,7 +33,7 @@ impl ISO9660Reader for File {
         #[cfg(unix)]
         {
             use std::os::unix::fs::FileExt;
-            FileExt::read_at(self, buf, lba * 2048)?
+            Ok(FileExt::read_at(self, buf, lba * 2048)?)
         }
         #[cfg(not(unix))]
         {

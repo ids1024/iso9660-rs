@@ -90,11 +90,6 @@ pub struct ISOFileReader<T: ISO9660Reader> {
 }
 
 impl<T: ISO9660Reader> Read for ISOFileReader<T> {
-    #[cfg(feature = "nightly")]
-    unsafe fn initializer(&self) -> std::io::Initializer {
-        std::io::Initializer::nop()
-    }
-
     fn read(&mut self, mut buf: &mut [u8]) -> io::Result<usize> {
         let mut seek = self.seek;
         while !buf.is_empty() && seek < self.size {
@@ -113,6 +108,8 @@ impl<T: ISO9660Reader> Read for ISOFileReader<T> {
         self.seek = seek;
         Ok(bytes)
     }
+
+    // TODO implement `read_buf` on nightly
 }
 
 impl<T: ISO9660Reader> Seek for ISOFileReader<T> {

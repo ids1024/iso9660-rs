@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: (MIT OR Apache-2.0)
 
-#![cfg_attr(feature = "nightly", feature(read_initializer, specialization))]
+#![cfg_attr(feature = "nightly", feature(min_specialization))]
 
 extern crate time;
 #[macro_use]
