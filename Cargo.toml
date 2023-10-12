@@ -14,7 +14,7 @@ nom = "7.1"
 
 [dev-dependencies]
 md5 = "0.7"
-fuser = "0.12"
+fuser = "0.13"
 libc = "0.2"
 
 [features]
