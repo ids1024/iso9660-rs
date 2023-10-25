@@ -126,6 +126,16 @@ impl<T: ISO9660Reader> ISO9660<T> {
         2048 // XXX
     }
 
+    /// Returns inner reader, consuming self.
+    /// This will fail if references to T are still used (e.g. ISODirectory<T> or ISOFile<T>).
+    pub fn try_into_inner(self) -> Result<T> {
+        // Drop root first since it owns a _file ref
+        drop(self.root);
+        self._file.try_into_inner().map_err(|_|
+            ISOError::IntoInner("Inner reader still referenced")
+        )
+    }
+
     primary_prop_str!(volume_set_identifier);
     primary_prop_str!(publisher_identifier);
     primary_prop_str!(data_preparer_identifier);
